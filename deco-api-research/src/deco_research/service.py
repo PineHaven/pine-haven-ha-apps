@@ -13,6 +13,7 @@ from aiohttp import web
 
 from .client import DecoReadOnlyClient, ProbeError
 from .options import ProbeOptions, load_options
+from .privileges import PrivilegeDropError, drop_process_privileges
 from .sanitizer import build_snapshot
 
 LOGGER = logging.getLogger("deco_research")
@@ -98,6 +99,12 @@ async def run() -> None:
     except (OSError, ValueError):
         LOGGER.error("App options are invalid; values were not logged")
         raise SystemExit(2) from None
+
+    try:
+        drop_process_privileges()
+    except PrivilegeDropError:
+        LOGGER.error("App could not enter its restricted runtime account")
+        raise SystemExit(3) from None
 
     runtime = ProbeRuntime(options)
     app = web.Application()

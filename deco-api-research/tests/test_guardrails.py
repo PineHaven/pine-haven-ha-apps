@@ -44,6 +44,19 @@ class SourceGuardrailTests(unittest.TestCase):
         for setting in forbidden:
             self.assertNotIn(setting, config)
 
+    def test_container_drops_root_before_starting_runtime(self):
+        dockerfile = (APP_ROOT / "Dockerfile").read_text(encoding="utf-8")
+        service = (APP_ROOT / "src" / "deco_research" / "service.py").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertIn("useradd --system --gid deco-research", dockerfile)
+        self.assertNotIn("USER deco-research", dockerfile)
+        self.assertLess(
+            service.index("drop_process_privileges()"),
+            service.index("runtime = ProbeRuntime(options)"),
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

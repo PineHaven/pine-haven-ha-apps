@@ -24,7 +24,9 @@ RUN chmod 0555 /run.sh \
     && groupadd --system deco-research \
     && useradd --system --gid deco-research --no-create-home deco-research
 
-USER deco-research
+# Supervisor mounts /data/options.json for root-only startup access. The Python
+# entry point reads that file once, then immediately drops to deco-research
+# before opening the ingress listener or constructing any network client.
 EXPOSE 8099
 
 CMD ["/run.sh"]
