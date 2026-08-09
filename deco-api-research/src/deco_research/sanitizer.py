@@ -10,7 +10,10 @@ NUMERIC_TEXT = re.compile(r"^[0-9]+(?:\.[0-9]+)?$")
 
 
 def build_snapshot(
-    devices: object, performance: object, clients: object | None = None
+    devices: object,
+    performance: object,
+    clients: object | None = None,
+    wireless: object | None = None,
 ) -> dict[str, Any]:
     """Return only aggregate or low-risk categorical mesh information."""
 
@@ -174,12 +177,96 @@ def build_snapshot(
                 "upload": _numeric_summary(up_speed_samples, up_speed_unparsed),
             },
         },
+        "wireless_radio": _wireless_radio_summary(wireless),
         "observed_fields": {
             "device_records": _record_field_types(safe_devices),
             "client_records": _record_field_types(safe_clients),
             "performance_result": _field_types(result),
         },
     }
+
+
+def _wireless_radio_summary(wireless: object) -> dict[str, dict[str, object]]:
+    source = wireless if isinstance(wireless, dict) else {}
+    return {
+        band: _wireless_band_summary(source.get(band), band)
+        for band in ("band2_4", "band5_1", "band5_2", "band6")
+    }
+
+
+def _wireless_band_summary(value: object, band: str) -> dict[str, object]:
+    band_data = value if isinstance(value, dict) else {}
+    host = band_data.get("host")
+    host_data = host if isinstance(host, dict) else {}
+
+    width_value = host_data.get("bandwidth")
+    if width_value is None:
+        width_value = host_data.get("channel_width")
+
+    automatic_width = _optional_boolean(host_data.get("auto_bandwidth"))
+    if automatic_width is None and isinstance(width_value, str):
+        if width_value.strip().lower() == "auto":
+            automatic_width = True
+
+    return {
+        "channel": _wireless_channel(host_data.get("channel"), band),
+        "configured_width_mhz": _wireless_width(width_value),
+        "automatic_channel": _optional_boolean(host_data.get("auto_channel")),
+        "automatic_width": automatic_width,
+    }
+
+
+def _wireless_channel(value: object, band: str) -> int | None:
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, int):
+        channel = value
+    elif isinstance(value, float) and value.is_integer():
+        channel = int(value)
+    elif isinstance(value, str) and value.strip().isdigit():
+        channel = int(value.strip())
+    else:
+        return None
+
+    limits = {
+        "band2_4": (1, 14),
+        "band5_1": (32, 196),
+        "band5_2": (32, 196),
+        "band6": (1, 233),
+    }
+    minimum, maximum = limits[band]
+    return channel if minimum <= channel <= maximum else None
+
+
+def _wireless_width(value: object) -> int | None:
+    allowed = {20, 40, 80, 160, 320}
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, int):
+        return value if value in allowed else None
+    if isinstance(value, float) and value.is_integer():
+        width = int(value)
+        return width if width in allowed else None
+    if not isinstance(value, str):
+        return None
+
+    normalized = value.strip().lower().replace(" ", "")
+    match = re.fullmatch(r"(?:eht|he|vht|ht)?(20|40|80|160|320)(?:mhz)?", normalized)
+    return int(match.group(1)) if match else None
+
+
+def _optional_boolean(value: object) -> bool | None:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, int) and value in {0, 1}:
+        return bool(value)
+    if isinstance(value, str):
+        normalized = value.strip().lower()
+        if normalized in {"1", "true", "yes", "on"}:
+            return True
+        if normalized in {"0", "false", "no", "off"}:
+            return False
+    return None
 
 
 def _add_label(target: set[str], value: object) -> None:

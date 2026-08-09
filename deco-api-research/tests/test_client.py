@@ -1,6 +1,10 @@
 import unittest
 
-from deco_research.client import DecoReadOnlyClient, ProbeProtocolError
+from deco_research.client import (
+    ALLOWED_READ_CALLS,
+    DecoReadOnlyClient,
+    ProbeProtocolError,
+)
 
 
 class _Url:
@@ -40,6 +44,17 @@ class _Session:
 
 
 class ClientGuardrailTests(unittest.IsolatedAsyncioTestCase):
+    def test_read_allowlist_is_exact(self):
+        self.assertEqual(
+            ALLOWED_READ_CALLS,
+            {
+                ("client", "client_list"),
+                ("device", "device_list"),
+                ("network", "performance"),
+                ("wireless", "wlan"),
+            },
+        )
+
     async def test_authenticated_reads_use_admin_path(self):
         session = _Session()
         client = DecoReadOnlyClient(
@@ -99,6 +114,31 @@ class ClientGuardrailTests(unittest.IsolatedAsyncioTestCase):
                 "form": "client_list",
                 "params": {"device_mac": "default"},
             },
+        )
+
+    async def test_wireless_status_uses_fixed_read_query(self):
+        client = DecoReadOnlyClient(
+            session=None,
+            host="https://deco.invalid",
+            username="operator",
+            password="secret",
+            verify_ssl=False,
+        )
+        captured = {}
+
+        async def authenticated_read(area, form, params):
+            captured.update(area=area, form=form, params=params)
+            return {"result": {"band2_4": {"host": {"channel": "6"}}}}
+
+        client._authenticated_read = authenticated_read
+
+        self.assertEqual(
+            await client.read_wireless_status(),
+            {"band2_4": {"host": {"channel": "6"}}},
+        )
+        self.assertEqual(
+            captured,
+            {"area": "wireless", "form": "wlan", "params": None},
         )
 
 

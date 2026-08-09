@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.5.0
+
+- Add one fixed `wireless` / `wlan` read discovered in the M9 Plus V2 1.9.1
+  firmware.
+- Return only validated channel, configured-width and automatic-selection
+  values; discard SSIDs, passwords, BSSIDs and every other raw wireless field.
+- Deliberately exclude the network-optimisation read because firmware analysis
+  shows that it starts a channel scan and writes temporary runtime state.
+- Keep the App disarmed by default and the armed run limited to one four-read
+  cycle.
+
 ## 0.4.1
 
 - Remove the misleading `is_wired` and `wired_port_list` aggregates after the

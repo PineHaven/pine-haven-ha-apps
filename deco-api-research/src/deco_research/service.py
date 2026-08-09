@@ -45,6 +45,7 @@ class ProbeRuntime:
                 "response_field_schema",
                 "anonymous_mesh_health",
                 "anonymous_client_telemetry",
+                "wireless_radio_status",
             ],
             "last_attempt_at": None,
             "last_success_at": None,
@@ -80,7 +81,10 @@ class ProbeRuntime:
             devices = await client.read_devices()
             performance = await client.read_performance()
             clients = await client.read_clients()
-            self._state["mesh"] = build_snapshot(devices, performance, clients)
+            wireless = await client.read_wireless_status()
+            self._state["mesh"] = build_snapshot(
+                devices, performance, clients, wireless
+            )
             self._state["last_success_at"] = _now()
             self._state["mode"] = "healthy"
             LOGGER.info("Read-only probe completed; sanitized snapshot updated")

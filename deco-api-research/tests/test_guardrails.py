@@ -30,6 +30,8 @@ class SourceGuardrailTests(unittest.TestCase):
         self.assertIn('("client", "client_list")', source)
         self.assertIn('("device", "device_list")', source)
         self.assertIn('("network", "performance")', source)
+        self.assertIn('("wireless", "wlan")', source)
+        self.assertNotIn('("network_optimize", "acs_optimize")', source)
 
     def test_app_requests_no_supervisor_or_host_privileges(self):
         config = (APP_ROOT / "config.yaml").read_text(encoding="utf-8")
