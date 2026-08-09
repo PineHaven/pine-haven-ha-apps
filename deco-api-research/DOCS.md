@@ -1,6 +1,6 @@
 # FREE THE DECO - API Research
 
-## Version 0.1.0 purpose
+## Version 0.1.x purpose
 
 Prove the Home Assistant App lifecycle and, only after explicit arming, confirm
 that the established local Deco authentication flow can perform two known read
@@ -26,7 +26,7 @@ No Deco request is possible in this state.
    sessions.
 3. Set `exclusive_session_acknowledged` and `probe_enabled` to `true`, then
    restart the App.
-4. Version 0.1.0 performs one two-read cycle and then remains idle. Inspect only
+4. Version 0.1.x performs one two-read cycle and then remains idle. Inspect only
    the sanitized status endpoint and App logs.
 5. Set `probe_enabled` and `exclusive_session_acknowledged` back to `false`,
    restart or stop the App, then re-enable the existing Deco integration.
