@@ -72,6 +72,27 @@ class SanitizerTests(unittest.TestCase):
                     "up_speed": "sensitive-unparsed-upload",
                 }
             ],
+            {
+                "band2_4": {
+                    "host": {
+                        "ssid": "sensitive-main-network-name",
+                        "password": "sensitive-main-network-password",
+                        "bssid": "sensitive-main-radio-id",
+                        "channel": "6",
+                        "bandwidth": "HT40",
+                        "auto_channel": False,
+                        "auto_bandwidth": "1",
+                    }
+                },
+                "band5_1": {
+                    "host": {
+                        "ssid": "sensitive-5g-network-name",
+                        "password": "sensitive-5g-network-password",
+                        "channel": 44,
+                        "channel_width": "80MHz",
+                    }
+                },
+            },
         )
         serialized = json.dumps(result)
 
@@ -90,6 +111,11 @@ class SanitizerTests(unittest.TestCase):
             "sensitive-internet-error",
             "second-sensitive-client-name",
             "sensitive-unparsed-upload",
+            "sensitive-main-network-name",
+            "sensitive-main-network-password",
+            "sensitive-main-radio-id",
+            "sensitive-5g-network-name",
+            "sensitive-5g-network-password",
         ):
             self.assertNotIn(secret, serialized)
 
@@ -159,6 +185,18 @@ class SanitizerTests(unittest.TestCase):
             result["observed_fields"]["performance_result"]["cpu_usage"],
             ["number"],
         )
+        self.assertEqual(
+            result["wireless_radio"]["band2_4"],
+            {
+                "channel": 6,
+                "configured_width_mhz": 40,
+                "automatic_channel": False,
+                "automatic_width": True,
+            },
+        )
+        self.assertEqual(
+            result["wireless_radio"]["band5_1"]["configured_width_mhz"], 80
+        )
 
     def test_invalid_performance_values_are_not_forwarded(self):
         result = build_snapshot([], {"result": {"cpu_usage": "raw-secret"}})
@@ -195,6 +233,34 @@ class SanitizerTests(unittest.TestCase):
         self.assertEqual(
             result["connected_clients"]["traffic"]["download"]["unparsed_count"],
             1,
+        )
+
+    def test_unexpected_wireless_values_are_discarded(self):
+        result = build_snapshot(
+            [],
+            {},
+            [],
+            {
+                "band2_4": {
+                    "host": {
+                        "channel": "sensitive-channel-text",
+                        "bandwidth": "sensitive-width-text",
+                        "auto_channel": "sensitive-auto-text",
+                    }
+                }
+            },
+        )
+        serialized = json.dumps(result)
+
+        self.assertNotIn("sensitive-", serialized)
+        self.assertEqual(
+            result["wireless_radio"]["band2_4"],
+            {
+                "channel": None,
+                "configured_width_mhz": None,
+                "automatic_channel": None,
+                "automatic_width": None,
+            },
         )
 
 

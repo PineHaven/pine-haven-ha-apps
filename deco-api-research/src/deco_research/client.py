@@ -28,6 +28,7 @@ ALLOWED_READ_CALLS = frozenset(
         ("client", "client_list"),
         ("device", "device_list"),
         ("network", "performance"),
+        ("wireless", "wlan"),
     }
 )
 
@@ -55,7 +56,7 @@ class ProbeProtocolError(ProbeError):
 
 
 class DecoReadOnlyClient:
-    """Client with a closed set of two post-authentication read calls."""
+    """Client with a closed set of four post-authentication read calls."""
 
     def __init__(
         self,
@@ -125,6 +126,21 @@ class DecoReadOnlyClient:
         if not isinstance(clients, list):
             raise ProbeProtocolError
         return clients
+
+    async def read_wireless_status(self) -> dict[str, Any]:
+        """Read the controller's current wireless configuration/status reply."""
+
+        async with self._operation_lock:
+            data = await self._authenticated_read(
+                area="wireless", form="wlan", params=None
+            )
+        try:
+            wireless = data["result"]
+        except (KeyError, TypeError) as err:
+            raise ProbeProtocolError from err
+        if not isinstance(wireless, dict):
+            raise ProbeProtocolError
+        return wireless
 
     async def _authenticated_read(
         self, area: str, form: str, params: dict[str, Any] | None
