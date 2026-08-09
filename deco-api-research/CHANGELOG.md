@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.4.1
+
+- Remove the misleading `is_wired` and `wired_port_list` aggregates after the
+  M9 Plus proved those fields do not represent usable node/physical-port counts.
+- Rely on the independently consistent connection-type, Ethernet-backhaul-port
+  and backhaul-speed fields instead.
+- Label backhaul speed as megabits per second, matching the upstream
+  integration's sensor definition.
+- Keep the fixed three-read wire allowlist unchanged.
+
 ## 0.4.0
 
 - Add anonymous backhaul, signal and internet-health summaries from the existing

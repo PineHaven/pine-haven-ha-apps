@@ -21,9 +21,7 @@ def build_snapshot(
     hardware_versions: set[str] = set()
     firmware_versions: set[str] = set()
     connections: Counter[str] = Counter()
-    wired_backhaul: Counter[str] = Counter()
     ethernet_backhaul_ports = 0
-    wired_ports = 0
     backhaul_speed_samples: list[float] = []
     backhaul_speed_unparsed = 0
     backhaul_max_speed_samples: list[float] = []
@@ -31,7 +29,6 @@ def build_snapshot(
     signal_samples: dict[str, list[float]] = {"band2_4": [], "band5": []}
     signal_unparsed: Counter[str] = Counter()
     internet_states: Counter[str] = Counter()
-    nonempty_internet_errors = 0
 
     for device in safe_devices:
         if not isinstance(device, dict):
@@ -47,16 +44,7 @@ def build_snapshot(
         for connection in _safe_labels(device.get("connection_type")):
             connections[connection] += 1
 
-        is_wired = device.get("is_wired")
-        if is_wired is True:
-            wired_backhaul["wired"] += 1
-        elif is_wired is False:
-            wired_backhaul["wireless"] += 1
-        else:
-            wired_backhaul["unknown"] += 1
-
         ethernet_backhaul_ports += _safe_list_length(device.get("eth_bkhl_ports"))
-        wired_ports += _safe_list_length(device.get("wired_port_list"))
 
         if (
             "backhual_speed" in device
@@ -82,9 +70,6 @@ def build_snapshot(
                     signal_unparsed[band] += 1
 
         internet_states[_internet_state(device.get("inet_status"))] += 1
-        error_value = device.get("inet_error_msg")
-        if isinstance(error_value, str) and error_value.strip():
-            nonempty_internet_errors += 1
 
     node_count = sum(1 for item in safe_devices if isinstance(item, dict))
     result = performance.get("result", {}) if isinstance(performance, dict) else {}
@@ -155,10 +140,9 @@ def build_snapshot(
         },
         "mesh_health": {
             "backhaul": {
-                "wired_status": dict(sorted(wired_backhaul.items())),
                 "connection_types": dict(sorted(connections.items())),
                 "ethernet_backhaul_ports_reported": ethernet_backhaul_ports,
-                "wired_ports_reported": wired_ports,
+                "reported_unit": "megabits_per_second",
                 "speed": _numeric_summary(
                     backhaul_speed_samples, backhaul_speed_unparsed
                 ),
@@ -172,7 +156,6 @@ def build_snapshot(
             },
             "internet": {
                 "states": dict(sorted(internet_states.items())),
-                "nonempty_error_field_count": nonempty_internet_errors,
             },
         },
         "connected_clients": {
