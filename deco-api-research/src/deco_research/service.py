@@ -43,6 +43,8 @@ class ProbeRuntime:
                 "controller_performance",
                 "connected_client_summary",
                 "response_field_schema",
+                "anonymous_mesh_health",
+                "anonymous_client_telemetry",
             ],
             "last_attempt_at": None,
             "last_success_at": None,
