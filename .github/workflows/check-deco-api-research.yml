@@ -1,0 +1,48 @@
+name: Deco API Research safety
+
+on:
+  push:
+    paths:
+      - "deco-api-research/**"
+      - ".github/workflows/check-deco-api-research.yml"
+  pull_request:
+    paths:
+      - "deco-api-research/**"
+      - ".github/workflows/check-deco-api-research.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Compile source
+        run: python -m compileall -q deco-api-research/src deco-api-research/tests
+
+      - name: Install dependencies
+        run: python -m pip install --requirement deco-api-research/requirements.txt
+
+      - name: Verify dependencies
+        run: python -m pip check
+
+      - name: Run guardrail tests
+        env:
+          PYTHONPATH: deco-api-research/src
+        run: python -m unittest discover -s deco-api-research/tests -v
+
+      - name: Build App container
+        run: >-
+          docker build
+          --build-arg BUILD_VERSION=0.1.0
+          --build-arg BUILD_ARCH=amd64
+          --tag deco-api-research:test
+          deco-api-research

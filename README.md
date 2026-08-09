@@ -6,6 +6,7 @@ The repository is designed to hold multiple independently installable Home Assis
 
 ## Current Apps
 - `zigbee2mqtt-ambience` — stable Zigbee2MQTT wrapper for PH-ZB-HOUSE-AMBIENCE.
+- `deco-api-research` — experimental, disarmed-by-default read-only TP-Link Deco local API probe.
 
 ## Planned naming pattern
 Future Apps should each live in their own root-level folder, for example:
@@ -25,3 +26,7 @@ Never commit:
 - live configuration files containing credentials
 
 The Zigbee2MQTT wrappers use the official Zigbee2MQTT container image. This repository only supplies Home Assistant App metadata.
+
+## Deco research App boundary
+
+The public `deco-api-research` folder contains only the sanitized, installable App and its tests. Private experiment records, raw responses, credentials, device identifiers and Pine Haven network details remain outside this repository.
