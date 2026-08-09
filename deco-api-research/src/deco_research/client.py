@@ -25,6 +25,7 @@ MAX_AES_KEY = (10**AES_KEY_BYTES) - 1
 PKCS1_V15_HEADER_BYTES = 11
 ALLOWED_READ_CALLS = frozenset(
     {
+        ("client", "client_list"),
         ("device", "device_list"),
         ("network", "performance"),
     }
@@ -107,6 +108,23 @@ class DecoReadOnlyClient:
             return await self._authenticated_read(
                 area="network", form="performance", params=None
             )
+
+    async def read_clients(self) -> list[dict[str, Any]]:
+        """Read the controller's current connected-client inventory."""
+
+        async with self._operation_lock:
+            data = await self._authenticated_read(
+                area="client",
+                form="client_list",
+                params={"device_mac": "default"},
+            )
+        try:
+            clients = data["result"]["client_list"]
+        except (KeyError, TypeError) as err:
+            raise ProbeProtocolError from err
+        if not isinstance(clients, list):
+            raise ProbeProtocolError
+        return clients
 
     async def _authenticated_read(
         self, area: str, form: str, params: dict[str, Any] | None

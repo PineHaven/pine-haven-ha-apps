@@ -4,7 +4,9 @@ from collections import Counter
 from typing import Any
 
 
-def build_snapshot(devices: object, performance: object) -> dict[str, Any]:
+def build_snapshot(
+    devices: object, performance: object, clients: object | None = None
+) -> dict[str, Any]:
     """Return only aggregate or low-risk categorical mesh information."""
 
     safe_devices = devices if isinstance(devices, list) else []
@@ -35,6 +37,24 @@ def build_snapshot(devices: object, performance: object) -> dict[str, Any]:
     if not isinstance(result, dict):
         result = {}
 
+    safe_clients = clients if isinstance(clients, list) else []
+    client_connections: Counter[str] = Counter()
+    client_interfaces: Counter[str] = Counter()
+    online_clients = 0
+    for client in safe_clients:
+        if not isinstance(client, dict):
+            continue
+        if client.get("online") is True:
+            online_clients += 1
+        connection = _safe_label(client.get("connection_type"))
+        if connection:
+            client_connections[connection] += 1
+        interface = _safe_label(client.get("interface"))
+        if interface:
+            client_interfaces[interface] += 1
+
+    client_count = sum(1 for item in safe_clients if isinstance(item, dict))
+
     return {
         "node_count": node_count,
         "online_count": online_count,
@@ -47,6 +67,12 @@ def build_snapshot(devices: object, performance: object) -> dict[str, Any]:
         "controller_performance": {
             "cpu_percent": _fraction_as_percent(result.get("cpu_usage")),
             "memory_percent": _fraction_as_percent(result.get("mem_usage")),
+        },
+        "connected_clients": {
+            "reported_count": client_count,
+            "online_count": online_clients,
+            "connection_types": dict(sorted(client_connections.items())),
+            "interfaces": dict(sorted(client_interfaces.items())),
         },
     }
 

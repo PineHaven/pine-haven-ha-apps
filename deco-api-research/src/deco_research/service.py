@@ -38,7 +38,11 @@ class ProbeRuntime:
             "target_configured": bool(
                 options.host and options.username and options.password
             ),
-            "capabilities": ["device_inventory", "controller_performance"],
+            "capabilities": [
+                "device_inventory",
+                "controller_performance",
+                "connected_client_summary",
+            ],
             "last_attempt_at": None,
             "last_success_at": None,
             "error_code": None,
@@ -72,7 +76,8 @@ class ProbeRuntime:
         try:
             devices = await client.read_devices()
             performance = await client.read_performance()
-            self._state["mesh"] = build_snapshot(devices, performance)
+            clients = await client.read_clients()
+            self._state["mesh"] = build_snapshot(devices, performance, clients)
             self._state["last_success_at"] = _now()
             self._state["mode"] = "healthy"
             LOGGER.info("Read-only probe completed; sanitized snapshot updated")

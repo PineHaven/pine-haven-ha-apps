@@ -27,6 +27,16 @@ class SanitizerTests(unittest.TestCase):
         result = build_snapshot(
             devices,
             {"result": {"cpu_usage": 0.25, "mem_usage": 0.5}},
+            [
+                {
+                    "name": "sensitive-client-name",
+                    "mac": "sensitive-client-id",
+                    "ip": "sensitive-client-address",
+                    "online": True,
+                    "connection_type": "band5",
+                    "interface": "main",
+                }
+            ],
         )
         serialized = json.dumps(result)
 
@@ -35,12 +45,20 @@ class SanitizerTests(unittest.TestCase):
             "sensitive-network-address",
             "sensitive-room-name",
             "sensitive-radio-id",
+            "sensitive-client-name",
+            "sensitive-client-id",
+            "sensitive-client-address",
         ):
             self.assertNotIn(secret, serialized)
 
         self.assertEqual(result["node_count"], 1)
         self.assertEqual(result["online_count"], 1)
         self.assertEqual(result["controller_performance"]["cpu_percent"], 25.0)
+        self.assertEqual(result["connected_clients"]["reported_count"], 1)
+        self.assertEqual(
+            result["connected_clients"]["connection_types"], {"band5": 1}
+        )
+        self.assertEqual(result["connected_clients"]["interfaces"], {"main": 1})
 
     def test_invalid_performance_values_are_not_forwarded(self):
         result = build_snapshot([], {"result": {"cpu_usage": "raw-secret"}})

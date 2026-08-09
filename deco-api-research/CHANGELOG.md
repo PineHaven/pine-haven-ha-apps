@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.0
+
+- Add the existing integration's proven global connected-client read.
+- Return only anonymous client counts grouped by connection type and interface.
+- Keep the armed App single-cycle, disarmed by default, and closed to any
+  user-selected endpoint or payload.
+
 ## 0.1.1
 
 - Read Supervisor's root-only options file before entering the restricted
