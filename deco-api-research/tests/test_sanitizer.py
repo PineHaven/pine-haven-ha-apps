@@ -22,6 +22,7 @@ class SanitizerTests(unittest.TestCase):
                 "group_status": "connected",
                 "role": "master",
                 "connection_type": "wired",
+                "signal_level": {"band2_4": 4, "band5": 3},
             }
         ]
         result = build_snapshot(
@@ -59,6 +60,17 @@ class SanitizerTests(unittest.TestCase):
             result["connected_clients"]["connection_types"], {"band5": 1}
         )
         self.assertEqual(result["connected_clients"]["interfaces"], {"main": 1})
+        self.assertEqual(
+            result["observed_fields"]["device_records"]["signal_level"],
+            ["object"],
+        )
+        self.assertEqual(
+            result["observed_fields"]["client_records"]["mac"], ["string"]
+        )
+        self.assertEqual(
+            result["observed_fields"]["performance_result"]["cpu_usage"],
+            ["number"],
+        )
 
     def test_invalid_performance_values_are_not_forwarded(self):
         result = build_snapshot([], {"result": {"cpu_usage": "raw-secret"}})
