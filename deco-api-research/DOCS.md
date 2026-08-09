@@ -14,5 +14,6 @@ schema map, anonymous backhaul/signal/internet health, and aggregate
 traffic/policy counts. Individual field values and raw records are not exposed.
 Unexpected telemetry strings are counted as unparsed and are never returned.
 
-Traffic and backhaul numbers retain the firmware's native units because the
-response does not declare a unit.
+Backhaul speeds are reported in megabits per second, matching the upstream
+integration's sensor definition. Traffic numbers retain the firmware's native
+units because the response does not declare one.

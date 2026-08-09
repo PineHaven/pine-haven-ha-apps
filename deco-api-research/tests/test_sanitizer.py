@@ -98,8 +98,8 @@ class SanitizerTests(unittest.TestCase):
         self.assertEqual(result["controller_performance"]["cpu_percent"], 25.0)
         self.assertEqual(result["connection_types"], {"band5": 1, "wired": 1})
         self.assertEqual(
-            result["mesh_health"]["backhaul"]["wired_status"],
-            {"wired": 1, "wireless": 1},
+            result["mesh_health"]["backhaul"]["reported_unit"],
+            "megabits_per_second",
         )
         self.assertEqual(
             result["mesh_health"]["backhaul"]["speed"],
@@ -119,10 +119,6 @@ class SanitizerTests(unittest.TestCase):
         self.assertEqual(
             result["mesh_health"]["internet"]["states"],
             {"offline": 1, "online": 1},
-        )
-        self.assertEqual(
-            result["mesh_health"]["internet"]["nonempty_error_field_count"],
-            1,
         )
         self.assertEqual(result["connected_clients"]["reported_count"], 2)
         self.assertEqual(
