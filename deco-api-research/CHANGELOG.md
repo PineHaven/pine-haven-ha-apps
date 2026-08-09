@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.0
+
+- Add a values-free schema map for the three already-approved response families.
+- Report only field names and broad data types; do not expose nested or raw
+  values.
+- Make no change to the fixed three-read wire allowlist.
+
 ## 0.2.0
 
 - Add the existing integration's proven global connected-client read.

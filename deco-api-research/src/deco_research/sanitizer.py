@@ -74,6 +74,11 @@ def build_snapshot(
             "connection_types": dict(sorted(client_connections.items())),
             "interfaces": dict(sorted(client_interfaces.items())),
         },
+        "observed_fields": {
+            "device_records": _record_field_types(safe_devices),
+            "client_records": _record_field_types(safe_clients),
+            "performance_result": _field_types(result),
+        },
     }
 
 
@@ -101,3 +106,35 @@ def _fraction_as_percent(value: object) -> float | None:
     if not 0 <= percent <= 100:
         return None
     return round(percent, 1)
+
+
+def _record_field_types(records: list[object]) -> dict[str, list[str]]:
+    observed: dict[str, set[str]] = {}
+    for record in records:
+        if not isinstance(record, dict):
+            continue
+        for key, value in record.items():
+            safe_key = _safe_label(key)
+            if safe_key:
+                observed.setdefault(safe_key, set()).add(_value_type(value))
+    return {key: sorted(types) for key, types in sorted(observed.items())}
+
+
+def _field_types(record: dict[object, object]) -> dict[str, list[str]]:
+    return _record_field_types([record])
+
+
+def _value_type(value: object) -> str:
+    if value is None:
+        return "null"
+    if isinstance(value, bool):
+        return "boolean"
+    if isinstance(value, (int, float)):
+        return "number"
+    if isinstance(value, str):
+        return "string"
+    if isinstance(value, dict):
+        return "object"
+    if isinstance(value, list):
+        return "array"
+    return "other"

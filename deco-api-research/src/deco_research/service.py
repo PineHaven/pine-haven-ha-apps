@@ -42,6 +42,7 @@ class ProbeRuntime:
                 "device_inventory",
                 "controller_performance",
                 "connected_client_summary",
+                "response_field_schema",
             ],
             "last_attempt_at": None,
             "last_success_at": None,
