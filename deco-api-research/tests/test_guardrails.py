@@ -27,6 +27,7 @@ class SourceGuardrailTests(unittest.TestCase):
         self.assertEqual(set(operations), {"read", "login"})
         self.assertNotIn("reboot_decos", source)
         self.assertNotIn('operation": "write', source)
+        self.assertIn('("client", "client_list")', source)
         self.assertIn('("device", "device_list")', source)
         self.assertIn('("network", "performance")', source)
 

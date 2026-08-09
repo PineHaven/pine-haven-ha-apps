@@ -75,6 +75,32 @@ class ClientGuardrailTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(ProbeProtocolError):
             await client._authenticated_read("system", "system", None)
 
+    async def test_client_summary_uses_global_read_query(self):
+        client = DecoReadOnlyClient(
+            session=None,
+            host="https://deco.invalid",
+            username="operator",
+            password="secret",
+            verify_ssl=False,
+        )
+        captured = {}
+
+        async def authenticated_read(area, form, params):
+            captured.update(area=area, form=form, params=params)
+            return {"result": {"client_list": []}}
+
+        client._authenticated_read = authenticated_read
+
+        self.assertEqual(await client.read_clients(), [])
+        self.assertEqual(
+            captured,
+            {
+                "area": "client",
+                "form": "client_list",
+                "params": {"device_mac": "default"},
+            },
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

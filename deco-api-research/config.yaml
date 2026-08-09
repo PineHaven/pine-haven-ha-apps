@@ -1,5 +1,5 @@
 name: "FREE THE DECO - API Research"
-version: "0.1.1"
+version: "0.2.0"
 slug: "deco_api_research"
 description: >-
   Disarmed-by-default, read-only local API probe for TP-Link Deco research.
