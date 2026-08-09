@@ -30,24 +30,13 @@ class _Response:
         return {"data": "ciphertext"}
 
 
-class _RequestContext:
-    def __init__(self, response):
-        self.response = response
-
-    async def __aenter__(self):
-        return self.response
-
-    async def __aexit__(self, _exc_type, _exc, _traceback):
-        return False
-
-
 class _Session:
     def __init__(self):
         self.url = None
 
-    def post(self, url, **_kwargs):
+    async def post(self, url, **_kwargs):
         self.url = url
-        return _RequestContext(_Response())
+        return _Response()
 
 
 class ClientGuardrailTests(unittest.IsolatedAsyncioTestCase):
