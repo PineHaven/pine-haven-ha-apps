@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.4.0
+
+- Add anonymous backhaul, signal and internet-health summaries from the existing
+  device-inventory reply.
+- Add aggregate traffic, mesh-membership, priority and restriction counts from
+  the existing connected-client reply.
+- Flatten the M9 Plus array-shaped node `connection_type` field.
+- Count unexpected telemetry formats as unparsed rather than exposing their raw
+  values.
+- Make no change to the fixed three-read wire allowlist.
+
 ## 0.3.0
 
 - Add a values-free schema map for the three already-approved response families.
