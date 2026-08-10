@@ -14,7 +14,7 @@ class SanitizerTests(unittest.TestCase):
             {
                 "mac": "AA-BB-CC-DD-EE-FF",
                 "device_ip": "sensitive-network-address",
-                "custom_nickname": "sensitive-room-name",
+                "custom_nickname": "m9plus",
                 "bssid_2g": "sensitive-radio-id",
                 "device_model": "Deco Test",
                 "hardware_ver": "V2",
@@ -100,7 +100,6 @@ class SanitizerTests(unittest.TestCase):
         for secret in (
             "AA-BB-CC-DD-EE-FF",
             "sensitive-network-address",
-            "sensitive-room-name",
             "sensitive-radio-id",
             "sensitive-client-name",
             "sensitive-client-id",
@@ -121,7 +120,7 @@ class SanitizerTests(unittest.TestCase):
             self.assertNotIn(secret, serialized)
 
         self.assertEqual(result["node_count"], 2)
-        self.assertEqual(result["nodes"][0]["id"], "living_room")
+        self.assertEqual(result["nodes"][0]["id"], "m9plus")
         self.assertEqual(result["nodes"][0]["name"], "Living Room")
         self.assertNotIn("mac", result["nodes"][0])
         self.assertEqual(result["online_count"], 1)
@@ -197,6 +196,28 @@ class SanitizerTests(unittest.TestCase):
         self.assertEqual(
             result["wireless_radio"]["band5_1"]["configured_width_mhz"], 80
         )
+
+    def test_alias_changes_display_name_without_renaming_stable_node_id(self):
+        result = build_snapshot(
+            [
+                {
+                    "mac": "AA-BB-CC-DD-EE-FF",
+                    "custom_nickname": "m9plus",
+                    "group_status": "connected",
+                },
+                {
+                    "mac": "BB-CC-DD-EE-FF-00",
+                    "custom_nickname": "m9plus",
+                    "group_status": "connected",
+                },
+            ],
+            {},
+            node_aliases={"AA-BB-CC-DD-EE-FF": "Workshop"},
+        )
+
+        by_id = {node["id"]: node for node in result["nodes"]}
+        self.assertEqual(set(by_id), {"m9plus", "m9plus_2"})
+        self.assertEqual(by_id["m9plus"]["name"], "Workshop")
 
     def test_invalid_performance_values_are_not_forwarded(self):
         result = build_snapshot([], {"result": {"cpu_usage": "raw-secret"}})

@@ -1,7 +1,12 @@
 import json
 import unittest
 
-from deco_research.home_assistant import HomeAssistantPublisher, build_entity_states
+from deco_research.home_assistant import (
+    MQTT_STATE_TOPIC,
+    HomeAssistantPublisher,
+    build_device_discovery,
+    build_entity_states,
+)
 
 
 class _Response:
@@ -29,16 +34,38 @@ class _Session:
 
 def _status():
     return {
+        "schema_version": 3,
+        "app_version": "1.1.0",
         "mode": "healthy",
         "last_success_at": "2026-08-10T12:00:00+00:00",
+        "last_attempt_at": "2026-08-10T12:00:00+00:00",
+        "next_poll_at": "2026-08-10T12:01:00+00:00",
+        "app_uptime_seconds": 600,
+        "poll_age_seconds": 0,
+        "stale_after_seconds": 180,
+        "mqtt_expire_after_seconds": 240,
+        "data_stale": False,
+        "successful_cycles": 10,
+        "failed_cycles": 1,
+        "consecutive_failures": 0,
+        "health": {
+            "deco_read": {"status": "healthy"},
+            "session": {"status": "authenticated"},
+        },
+        "publisher": {"status": "healthy"},
+        "recovery": {"status": "not_needed"},
+        "manual_refresh": {"status": "idle"},
         "mesh": {
             "node_count": 1,
             "online_count": 1,
             "offline_count": 0,
             "nodes": [
                 {
-                    "id": "living_room",
-                    "name": "Living Room",
+                    "id": "m9plus",
+                    "name": "Workshop",
+                    "model": "Deco M9 Plus",
+                    "hardware_version": "2.0",
+                    "firmware_version": "1.9.1",
                     "online": True,
                     "internet": "online",
                     "role": "controller",
@@ -66,7 +93,7 @@ class HomeAssistantPublisherTests(unittest.IsolatedAsyncioTestCase):
     def test_entities_contain_only_sanitized_monitor_data(self):
         entities = build_entity_states(_status())
         self.assertEqual(
-            entities["binary_sensor.free_the_deco_living_room_online"]["state"],
+            entities["binary_sensor.free_the_deco_m9plus_online"]["state"],
             "on",
         )
         self.assertEqual(entities["sensor.free_the_deco_2_4_ghz_channel"]["state"], 4)
@@ -74,7 +101,34 @@ class HomeAssistantPublisherTests(unittest.IsolatedAsyncioTestCase):
         self.assertNotIn("mac", serialized.lower())
         self.assertNotIn("password", serialized.lower())
 
-    async def test_unchanged_states_are_not_republished(self):
+    def test_device_discovery_preserves_ids_and_contains_no_hardware_identifier(self):
+        status = _status()
+        entities = build_entity_states(status)
+        messages = build_device_discovery(status, entities)
+
+        self.assertEqual(len(messages), 2)
+        serialized = json.dumps(messages)
+        self.assertNotIn("mac", serialized.lower())
+        self.assertNotIn("password", serialized.lower())
+        monitor = json.loads(
+            messages["homeassistant/device/free_the_deco_monitor/config"]
+        )
+        component = monitor["components"]["free_the_deco_monitoring_healthy"]
+        self.assertEqual(
+            component["default_entity_id"],
+            "binary_sensor.free_the_deco_monitoring_healthy",
+        )
+        self.assertEqual(component["unique_id"], "free_the_deco_monitoring_healthy")
+        self.assertEqual(component["expire_after"], 240)
+        self.assertEqual(monitor["state_topic"], MQTT_STATE_TOPIC)
+
+        node = json.loads(
+            messages["homeassistant/device/free_the_deco_node_m9plus/config"]
+        )
+        self.assertEqual(node["device"]["identifiers"], ["free_the_deco_node_m9plus"])
+        self.assertEqual(node["device"]["name"], "Workshop Deco")
+
+    async def test_discovery_is_deduplicated_but_state_refreshes_each_cycle(self):
         session = _Session()
         publisher = HomeAssistantPublisher(
             session, token="test-token", api_base="http://ha.invalid/api"
@@ -82,17 +136,46 @@ class HomeAssistantPublisherTests(unittest.IsolatedAsyncioTestCase):
         changed, total = await publisher.publish(_status())
         self.assertEqual(changed, total)
         first_count = len(session.posts)
+        self.assertEqual(first_count, 3)
 
         changed, second_total = await publisher.publish(_status())
         self.assertEqual(changed, 0)
         self.assertEqual(second_total, total)
-        self.assertEqual(len(session.posts), first_count)
+        self.assertEqual(len(session.posts), first_count + 1)
+        second_state = session.posts[-1][1]["json"]
+        self.assertEqual(second_state["topic"], MQTT_STATE_TOPIC)
+        self.assertEqual(second_state["qos"], 1)
+        self.assertFalse(second_state["retain"])
         self.assertTrue(
             all(
                 call[1]["headers"]["Authorization"] == "Bearer test-token"
                 for call in session.posts
             )
         )
+
+    async def test_removed_node_discovery_is_cleared_with_retained_empty_payload(self):
+        session = _Session()
+        publisher = HomeAssistantPublisher(
+            session, token="test-token", api_base="http://ha.invalid/api"
+        )
+        await publisher.publish(_status())
+        status_without_node = _status()
+        status_without_node["mesh"]["nodes"] = []
+        status_without_node["mesh"]["node_count"] = 0
+        status_without_node["mesh"]["online_count"] = 0
+        await publisher.publish(status_without_node)
+
+        removals = [
+            call[1]["json"]
+            for call in session.posts
+            if call[1]["json"]["payload"] == ""
+        ]
+        self.assertEqual(len(removals), 1)
+        self.assertEqual(
+            removals[0]["topic"],
+            "homeassistant/device/free_the_deco_node_m9plus/config",
+        )
+        self.assertTrue(removals[0]["retain"])
 
 
 if __name__ == "__main__":

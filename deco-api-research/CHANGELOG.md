@@ -1,5 +1,25 @@
 # Changelog
 
+## 1.1.0
+
+- Replace transient Home Assistant state objects with retained MQTT Device
+  Discovery and non-retained sanitized state updates.
+- Preserve all established `free_the_deco_*` entity IDs while grouping the monitor
+  and each Deco under logical, hardware-identifier-free devices.
+- Add a three-interval freshness threshold, MQTT expiry, App uptime, poll age,
+  next-poll timing, cycle duration and success/failure counters.
+- Report Deco-read, exclusive-session and Home Assistant publishing health
+  independently, with safe error categories and explicit recovery state.
+- Add queued, running, succeeded and failed manual-refresh states and reject
+  duplicate pending requests.
+- Expand the responsive Ingress UI with operational-health and diagnostics panels.
+- Allow display aliases such as Workshop and Gym without changing established
+  entity IDs.
+- Document Home Assistant administrator-management visibility of stored App
+  options and the coordinated Deco credential-rotation procedure.
+- Keep the wire boundary at the same four fixed read operations; configuration
+  writes, scans, optimisation, reboot and generic endpoints remain absent.
+
 ## 1.0.0
 
 - Promote the bounded research probe into Pine Haven's primary continuous Deco
