@@ -1,4 +1,4 @@
-name: Deco API Research safety
+name: FREE THE DECO safety
 
 on:
   push:
@@ -42,7 +42,7 @@ jobs:
       - name: Build App container
         run: >-
           docker build
-          --build-arg BUILD_VERSION=0.5.0
+          --build-arg BUILD_VERSION=1.0.0
           --build-arg BUILD_ARCH=amd64
           --tag deco-api-research:test
           deco-api-research

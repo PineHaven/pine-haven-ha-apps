@@ -1,9 +1,13 @@
-"""Reduce raw Deco replies to a non-identifying research snapshot."""
+"""Reduce raw Deco replies to a local-safe monitoring snapshot."""
 
+import base64
 import math
 import re
+import unicodedata
 from collections import Counter
 from typing import Any
+
+from .options import normalize_mac
 
 MAX_REPORTED_NUMBER = 10**15
 NUMERIC_TEXT = re.compile(r"^[0-9]+(?:\.[0-9]+)?$")
@@ -14,8 +18,9 @@ def build_snapshot(
     performance: object,
     clients: object | None = None,
     wireless: object | None = None,
+    node_aliases: dict[str, str] | None = None,
 ) -> dict[str, Any]:
-    """Return only aggregate or low-risk categorical mesh information."""
+    """Return monitoring data without client or network identifiers."""
 
     safe_devices = devices if isinstance(devices, list) else []
     online_count = 0
@@ -127,6 +132,7 @@ def build_snapshot(
             up_speed_unparsed += 1
 
     client_count = sum(1 for item in safe_clients if isinstance(item, dict))
+    nodes = _node_summaries(safe_devices, node_aliases or {})
 
     return {
         "node_count": node_count,
@@ -136,6 +142,7 @@ def build_snapshot(
         "models": sorted(models),
         "hardware_versions": sorted(hardware_versions),
         "firmware_versions": sorted(firmware_versions),
+        "nodes": nodes,
         "connection_types": dict(sorted(connections.items())),
         "controller_performance": {
             "cpu_percent": _fraction_as_percent(result.get("cpu_usage")),
@@ -171,9 +178,7 @@ def build_snapshot(
             "restrictions": dict(sorted(client_restrictions.items())),
             "traffic": {
                 "reported_unit": "firmware_native",
-                "download": _numeric_summary(
-                    down_speed_samples, down_speed_unparsed
-                ),
+                "download": _numeric_summary(down_speed_samples, down_speed_unparsed),
                 "upload": _numeric_summary(up_speed_samples, up_speed_unparsed),
             },
         },
@@ -184,6 +189,91 @@ def build_snapshot(
             "performance_result": _field_types(result),
         },
     }
+
+
+def _node_summaries(
+    devices: list[object], aliases: dict[str, str]
+) -> list[dict[str, Any]]:
+    """Build per-node health rows while discarding MAC, IP and BSSID values."""
+
+    normalized_aliases = {
+        mac: name
+        for raw_mac, name in aliases.items()
+        if (mac := normalize_mac(raw_mac))
+    }
+    records = [item for item in devices if isinstance(item, dict)]
+    records.sort(key=lambda item: normalize_mac(item.get("mac")) or "")
+    used_ids: Counter[str] = Counter()
+    summaries: list[dict[str, Any]] = []
+
+    for record in records:
+        mac = normalize_mac(record.get("mac"))
+        name = normalized_aliases.get(mac or "") or _decoded_node_name(record)
+        if name is None:
+            name = "Unlabelled Deco"
+        base_id = _slug(name) or "deco"
+        used_ids[base_id] += 1
+        node_id = (
+            base_id if used_ids[base_id] == 1 else f"{base_id}_{used_ids[base_id]}"
+        )
+
+        connection_types = _safe_labels(record.get("connection_type"))
+        signal = record.get("signal_level")
+        signal_data = signal if isinstance(signal, dict) else {}
+        role = str(record.get("role", "")).strip().lower()
+        if role == "master":
+            safe_role = "controller"
+        elif role in {"slave", "satellite", "agent"}:
+            safe_role = "satellite"
+        else:
+            safe_role = "unknown"
+
+        summaries.append(
+            {
+                "id": node_id,
+                "name": name,
+                "online": str(record.get("group_status", "")).lower() == "connected",
+                "internet": _internet_state(record.get("inet_status")),
+                "role": safe_role,
+                "model": _safe_label(record.get("device_model")),
+                "hardware_version": _safe_label(record.get("hardware_ver")),
+                "firmware_version": _safe_label(record.get("software_ver")),
+                "connection_types": connection_types,
+                "ethernet_backhaul_ports_reported": _safe_list_length(
+                    record.get("eth_bkhl_ports")
+                ),
+                "backhaul_speed_mbps": _number(record.get("backhual_speed")),
+                "backhaul_max_speed_mbps": _number(record.get("backhual_max_speed")),
+                "signal_2_4": _number(signal_data.get("band2_4")),
+                "signal_5": _number(signal_data.get("band5")),
+            }
+        )
+
+    return sorted(
+        summaries, key=lambda item: (item["role"] != "controller", item["name"])
+    )
+
+
+def _decoded_node_name(record: dict[str, Any]) -> str | None:
+    custom = _safe_label(record.get("custom_nickname"))
+    if custom:
+        try:
+            decoded = base64.b64decode(custom, validate=True).decode("utf-8")
+        except (ValueError, UnicodeDecodeError):
+            decoded = custom
+        safe = _safe_label(decoded)
+        if safe:
+            return safe
+
+    nickname = _safe_label(record.get("nickname"))
+    return nickname.replace("_", " ").title() if nickname else None
+
+
+def _slug(value: str) -> str:
+    ascii_value = (
+        unicodedata.normalize("NFKD", value).encode("ascii", "ignore").decode()
+    )
+    return re.sub(r"[^a-z0-9]+", "_", ascii_value.lower()).strip("_")[:48]
 
 
 def _wireless_radio_summary(wireless: object) -> dict[str, dict[str, object]]:
@@ -204,9 +294,12 @@ def _wireless_band_summary(value: object, band: str) -> dict[str, object]:
         width_value = host_data.get("channel_width")
 
     automatic_width = _optional_boolean(host_data.get("auto_bandwidth"))
-    if automatic_width is None and isinstance(width_value, str):
-        if width_value.strip().lower() == "auto":
-            automatic_width = True
+    if (
+        automatic_width is None
+        and isinstance(width_value, str)
+        and width_value.strip().lower() == "auto"
+    ):
+        automatic_width = True
 
     return {
         "channel": _wireless_channel(host_data.get("channel"), band),
