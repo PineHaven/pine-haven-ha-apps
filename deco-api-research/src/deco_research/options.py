@@ -24,6 +24,7 @@ class MonitorOptions:
     poll_interval_seconds: int
     publish_to_home_assistant: bool
     node_aliases: dict[str, str]
+    stale_after_intervals: int = 3
 
     @classmethod
     def from_dict(cls, data: dict) -> "MonitorOptions":
@@ -34,6 +35,9 @@ class MonitorOptions:
         session_acknowledged = data.get("exclusive_session_acknowledged") is True
         verify_ssl = data.get("verify_ssl") is True
         poll_interval = _poll_interval(data.get("poll_interval_seconds", 60))
+        stale_after_intervals = _stale_after_intervals(
+            data.get("stale_after_intervals", 3)
+        )
         publish = data.get("publish_to_home_assistant", True) is True
         node_aliases = _node_aliases(data.get("node_aliases_json", "{}"))
 
@@ -43,15 +47,16 @@ class MonitorOptions:
             raise OptionsError("monitoring_requires_exclusive_session_acknowledgement")
 
         return cls(
-            enabled,
-            host,
-            username,
-            password,
-            session_acknowledged,
-            verify_ssl,
-            poll_interval,
-            publish,
-            node_aliases,
+            monitoring_enabled=enabled,
+            host=host,
+            username=username,
+            password=password,
+            exclusive_session_acknowledged=session_acknowledged,
+            verify_ssl=verify_ssl,
+            poll_interval_seconds=poll_interval,
+            publish_to_home_assistant=publish,
+            node_aliases=node_aliases,
+            stale_after_intervals=stale_after_intervals,
         )
 
 
@@ -81,6 +86,14 @@ def _poll_interval(value: object) -> int:
         raise OptionsError("poll_interval_must_be_an_integer")
     if not 30 <= value <= 3600:
         raise OptionsError("poll_interval_out_of_range")
+    return value
+
+
+def _stale_after_intervals(value: object) -> int:
+    if isinstance(value, bool) or not isinstance(value, int):
+        raise OptionsError("stale_after_intervals_must_be_an_integer")
+    if not 2 <= value <= 10:
+        raise OptionsError("stale_after_intervals_out_of_range")
     return value
 
 

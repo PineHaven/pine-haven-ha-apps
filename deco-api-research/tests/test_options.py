@@ -13,6 +13,7 @@ class MonitorOptionsTests(unittest.TestCase):
         self.assertFalse(options.monitoring_enabled)
         self.assertIsNone(options.host)
         self.assertEqual(options.poll_interval_seconds, 60)
+        self.assertEqual(options.stale_after_intervals, 3)
         self.assertTrue(options.publish_to_home_assistant)
 
     def test_enabled_monitor_requires_all_connection_values(self):
@@ -62,6 +63,12 @@ class MonitorOptionsTests(unittest.TestCase):
     def test_poll_interval_is_bounded(self):
         with self.assertRaisesRegex(OptionsError, "out_of_range"):
             MonitorOptions.from_dict({"poll_interval_seconds": 29})
+
+    def test_stale_interval_is_bounded(self):
+        with self.assertRaisesRegex(OptionsError, "stale_after_intervals_out_of_range"):
+            MonitorOptions.from_dict({"stale_after_intervals": 1})
+        with self.assertRaisesRegex(OptionsError, "must_be_an_integer"):
+            MonitorOptions.from_dict({"stale_after_intervals": True})
 
     def test_node_aliases_are_normalized(self):
         options = MonitorOptions.from_dict(

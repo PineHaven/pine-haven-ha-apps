@@ -208,10 +208,14 @@ def _node_summaries(
 
     for record in records:
         mac = normalize_mac(record.get("mac"))
-        name = normalized_aliases.get(mac or "") or _decoded_node_name(record)
+        source_name = _decoded_node_name(record)
+        name = normalized_aliases.get(mac or "") or source_name
         if name is None:
             name = "Unlabelled Deco"
-        base_id = _slug(name) or "deco"
+        # A display alias must never rename an existing Home Assistant entity.
+        # The source nickname is already part of the established v1.0 entity ID;
+        # aliases change presentation only.
+        base_id = _slug(source_name or name) or "deco"
         used_ids[base_id] += 1
         node_id = (
             base_id if used_ids[base_id] == 1 else f"{base_id}_{used_ids[base_id]}"

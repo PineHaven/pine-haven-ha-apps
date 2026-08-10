@@ -1,5 +1,5 @@
 name: "FREE THE DECO"
-version: "1.0.0"
+version: "1.1.0"
 slug: "deco_api_research"
 description: >-
   Pine Haven's local-first TP-Link Deco mesh monitor and research platform.
@@ -20,6 +20,7 @@ options:
   monitoring_enabled: false
   exclusive_session_acknowledged: false
   poll_interval_seconds: 60
+  stale_after_intervals: 3
   publish_to_home_assistant: true
   node_aliases_json: "{}"
   verify_ssl: false
@@ -27,6 +28,7 @@ schema:
   monitoring_enabled: bool
   exclusive_session_acknowledged: bool
   poll_interval_seconds: int(30,3600)
+  stale_after_intervals: int(2,10)
   publish_to_home_assistant: bool
   node_aliases_json: str
   host: url?

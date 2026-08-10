@@ -47,6 +47,12 @@ class SourceGuardrailTests(unittest.TestCase):
             self.assertNotIn(setting, config)
         self.assertEqual(config.count("homeassistant_api: true"), 1)
 
+        publisher = (APP_ROOT / "src" / "deco_research" / "home_assistant.py").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("/services/mqtt/publish", publisher)
+        self.assertNotIn("/states/", publisher)
+
     def test_container_drops_root_before_starting_runtime(self):
         dockerfile = (APP_ROOT / "Dockerfile").read_text(encoding="utf-8")
         service = (APP_ROOT / "src" / "deco_research" / "service.py").read_text(
