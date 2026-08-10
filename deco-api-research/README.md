@@ -1,33 +1,31 @@
-# Deco API Research App
+# FREE THE DECO
 
-Experimental Home Assistant App for bounded, read-only Stage 2 research.
+Pine Haven's local-first TP-Link Deco mesh monitor and Stage 2 research platform.
 
-Version 0.5.x is a bounded radio-status probe. It is disarmed by default and cannot
-contact a Deco until the operator supplies a target and credentials and sets
-`probe_enabled` to `true`.
+Version 1.0 promotes the former bounded research probe into the primary Home
+Assistant App for Deco telemetry. It polls a fixed four-read allowlist, renders a
+self-contained Ingress dashboard, and publishes sanitized mesh-health entities to
+Home Assistant. It is still read-only: no Deco setting or generic API operation is
+available.
 
-Because Deco owner login is exclusive, arming also requires an explicit session
-acknowledgement. Version 0.5.x performs one four-read cycle and then remains idle;
-the normal Deco integration must be paused during that bounded cycle.
+The live monitor reports:
 
-When armed, it performs only these authenticated API reads:
+- each named Deco's online, internet, backhaul and signal state;
+- mesh totals and controller CPU/memory load;
+- anonymous connected-client totals by band and network interface;
+- current Wi-Fi channels and configured widths;
+- last successful poll, publishing health and safe error categories.
 
-- mesh device inventory;
-- controller CPU and memory performance;
-- current connected-client inventory.
-- passive wireless channel and configured-width status.
+Client names, client addresses, SSIDs, Wi-Fi passwords, BSSIDs, node MACs and raw
+API replies are never exposed or published. Node display names are permitted only
+inside the authenticated local Ingress UI and Home Assistant telemetry.
 
-The App never returns raw responses. Its ingress status endpoint contains only
-counts, model/firmware categories, aggregate performance, anonymous client
-connection/interface totals, anonymous backhaul/signal/internet health,
-aggregate traffic/policy counts, and the names/types of fields present in each
-response. Wireless output is limited to validated channel, width and automatic
-selection values. Field values that could identify a person, client or node are
-discarded. Unexpected telemetry strings are counted as unparsed and are never
-returned.
+Because the Deco owner login is exclusive, continuous monitoring must not run at
+the same time as another Deco integration using that login. Enabling the monitor
+therefore still requires an explicit session acknowledgement.
 
-The firmware's network-optimisation read is not used because it starts a scan
-and writes temporary runtime state even though the wire operation is labelled
+The firmware's network-optimisation read remains excluded because it starts a scan
+and writes temporary runtime state even though its wire operation is labelled
 `read`.
 
-See [DOCS.md](DOCS.md) for the exact operating procedure and safety boundary.
+See [DOCS.md](DOCS.md) for the operating and safety contract.

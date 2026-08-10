@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.0.0
+
+- Promote the bounded research probe into Pine Haven's primary continuous Deco
+  telemetry App while keeping all Deco operations read-only.
+- Add a responsive Home Assistant Ingress UI for monitor health, named mesh nodes,
+  client distribution, radio status, known Zigbee overlap and capability status.
+- Publish sanitized summary and per-node telemetry through Home Assistant's scoped
+  API, skipping unchanged state payloads.
+- Add configurable 30–3600 second polling, manual refresh, safe retry behavior,
+  automatic boot support and named-node aliases.
+- Continue discarding client identifiers, addresses, wireless secrets, BSSIDs,
+  node MACs and raw API replies.
+- Keep network optimisation, reboot and all configuration writes absent.
+
 ## 0.5.0
 
 - Add one fixed `wireless` / `wlan` read discovered in the M9 Plus V2 1.9.1

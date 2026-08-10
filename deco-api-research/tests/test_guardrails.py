@@ -33,12 +33,11 @@ class SourceGuardrailTests(unittest.TestCase):
         self.assertIn('("wireless", "wlan")', source)
         self.assertNotIn('("network_optimize", "acs_optimize")', source)
 
-    def test_app_requests_no_supervisor_or_host_privileges(self):
+    def test_app_requests_only_scoped_home_assistant_api_access(self):
         config = (APP_ROOT / "config.yaml").read_text(encoding="utf-8")
         forbidden = (
             "host_network: true",
             "hassio_api: true",
-            "homeassistant_api: true",
             "docker_api: true",
             "full_access: true",
             "privileged:",
@@ -46,6 +45,7 @@ class SourceGuardrailTests(unittest.TestCase):
         )
         for setting in forbidden:
             self.assertNotIn(setting, config)
+        self.assertEqual(config.count("homeassistant_api: true"), 1)
 
     def test_container_drops_root_before_starting_runtime(self):
         dockerfile = (APP_ROOT / "Dockerfile").read_text(encoding="utf-8")
@@ -57,7 +57,7 @@ class SourceGuardrailTests(unittest.TestCase):
         self.assertNotIn("USER deco-research", dockerfile)
         self.assertLess(
             service.index("drop_process_privileges()"),
-            service.index("runtime = ProbeRuntime(options)"),
+            service.index("runtime = ProbeRuntime("),
         )
 
 
