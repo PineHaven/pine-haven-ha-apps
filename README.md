@@ -7,6 +7,7 @@ The repository is designed to hold multiple independently installable Home Assis
 ## Current Apps
 - `zigbee2mqtt-ambience` — stable Zigbee2MQTT wrapper for PH-ZB-HOUSE-AMBIENCE.
 - `deco-api-research` — stable, read-only TP-Link Deco monitor with Home Assistant MQTT Device Discovery.
+- `deco-control-lab` — experimental, fail-closed channel/width laboratory for one physically isolated Deco.
 
 ## Planned naming pattern
 Future Apps should each live in their own root-level folder, for example:
