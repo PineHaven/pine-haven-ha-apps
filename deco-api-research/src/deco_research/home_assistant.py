@@ -147,14 +147,23 @@ def build_device_discovery(
         for entry in sorted(entries, key=lambda item: item["object_id"]):
             object_id = entry["object_id"]
             component = dict(entry["discovery"])
+            state_expression = f"value_json[{object_id!r}][\"state\"]"
+            if "state_class" in component or "unit_of_measurement" in component:
+                value_template = (
+                    "{{ "
+                    + state_expression
+                    + " if "
+                    + state_expression
+                    + " is number else 'None' }}"
+                )
+            else:
+                value_template = "{{ " + state_expression + " }}"
             component.update(
                 {
                     "platform": entry["component"],
                     "unique_id": object_id,
                     "default_entity_id": entry["entity_id"],
-                    "value_template": (
-                        "{{ value_json[" + repr(object_id) + "][\"state\"] }}"
-                    ),
+                    "value_template": value_template,
                     "json_attributes_topic": MQTT_STATE_TOPIC,
                     "json_attributes_template": (
                         "{{ value_json["
