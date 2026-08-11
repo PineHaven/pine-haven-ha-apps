@@ -7,6 +7,7 @@ import unicodedata
 from collections import Counter
 from typing import Any
 
+from .coexistence import build_coexistence_diagnostics
 from .options import normalize_mac
 
 MAX_REPORTED_NUMBER = 10**15
@@ -134,6 +135,7 @@ def build_snapshot(
     client_count = sum(1 for item in safe_clients if isinstance(item, dict))
     nodes = _node_summaries(safe_devices, node_aliases or {})
 
+    wireless_radio = _wireless_radio_summary(wireless)
     return {
         "node_count": node_count,
         "online_count": online_count,
@@ -182,7 +184,10 @@ def build_snapshot(
                 "upload": _numeric_summary(up_speed_samples, up_speed_unparsed),
             },
         },
-        "wireless_radio": _wireless_radio_summary(wireless),
+        "wireless_radio": wireless_radio,
+        "coexistence": build_coexistence_diagnostics(
+            wireless_radio.get("band2_4")
+        ),
         "observed_fields": {
             "device_records": _record_field_types(safe_devices),
             "client_records": _record_field_types(safe_clients),
@@ -308,6 +313,7 @@ def _wireless_band_summary(value: object, band: str) -> dict[str, object]:
     return {
         "channel": _wireless_channel(host_data.get("channel"), band),
         "configured_width_mhz": _wireless_width(width_value),
+        "firmware_width_token": _wireless_width_token(width_value),
         "automatic_channel": _optional_boolean(host_data.get("auto_channel")),
         "automatic_width": automatic_width,
     }
@@ -350,6 +356,17 @@ def _wireless_width(value: object) -> int | None:
     normalized = value.strip().lower().replace(" ", "")
     match = re.fullmatch(r"(?:eht|he|vht|ht)?(20|40|80|160|320)(?:mhz)?", normalized)
     return int(match.group(1)) if match else None
+
+
+def _wireless_width_token(value: object) -> str | None:
+    """Keep only recognized, non-sensitive firmware HT-mode tokens."""
+
+    if not isinstance(value, str):
+        return None
+    normalized = value.strip().upper()
+    if re.fullmatch(r"(?:EHT|HE|VHT|HT)(?:20|40|80|160|320)(?:[+-])?", normalized):
+        return normalized
+    return None
 
 
 def _optional_boolean(value: object) -> bool | None:

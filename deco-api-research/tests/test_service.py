@@ -54,7 +54,7 @@ class ProbeRuntimeTests(unittest.IsolatedAsyncioTestCase):
         await asyncio.sleep(0)
 
         status = runtime.status()
-        self.assertEqual(status["schema_version"], 3)
+        self.assertEqual(status["schema_version"], 4)
         self.assertEqual(status["mode"], "disabled")
         self.assertFalse(status["data_stale"])
         self.assertIsNone(status["last_attempt_at"])
@@ -78,6 +78,10 @@ class ProbeRuntimeTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(
             status["mesh"]["wireless_radio"]["band2_4"]["channel"],
             11,
+        )
+        self.assertEqual(
+            status["mesh"]["coexistence"]["control_readiness"]["state"],
+            "disarmed",
         )
 
     async def test_failure_is_categorized_and_next_success_records_recovery(self):

@@ -2,10 +2,15 @@
 
 Pine Haven's local-first TP-Link Deco mesh monitor and Stage 2 research platform.
 
-Version 1.1 hardens the primary Home Assistant App for Deco telemetry. It polls a
-fixed four-read allowlist, renders a responsive Ingress dashboard, and registers
-sanitized mesh-health entities and logical devices with MQTT Device Discovery.
-It is still read-only: no Deco setting or generic API operation is available.
+Version 1.2 adds a Pine Haven-specific 2.4 GHz coexistence laboratory to the
+primary Home Assistant App. It compares the observed Deco channel and width with
+the CORE, AMBIENCE and PERIMETER Zigbee channels, models three 20 MHz candidate
+plans, and exposes the firmware-derived radio-control contract and remaining live
+validation gates. It keeps the version 1.1 operational hardening, fixed four-read
+allowlist and MQTT Device Discovery output.
+
+It is still read-only: the control laboratory is explicitly disarmed and no Deco
+setting, optimiser scan, or generic API operation is available.
 
 The live monitor reports:
 
@@ -13,6 +18,9 @@ The live monitor reports:
 - mesh totals and controller CPU/memory load;
 - anonymous connected-client totals by band and network interface;
 - current Wi-Fi channels and configured widths;
+- a conservative coexistence assessment for Zigbee channels 11, 15 and 20;
+- channel 1, 6 and 11 at 20 MHz trade-off plans, ranked by geometry only;
+- radio-control readiness, firmware mapping and live-validation gates;
 - read, session and Home Assistant publishing health;
 - freshness, poll timing, cycle counters, recovery state and safe error categories;
 - explicit queued, running, succeeded and failed manual-refresh states.
@@ -37,6 +45,7 @@ credential-rotation procedure in [DOCS.md](DOCS.md) after diagnostic work.
 
 The firmware's network-optimisation read remains excluded because it starts a scan
 and writes temporary runtime state even though its wire operation is labelled
-`read`.
+`read`. The documented `admin/wireless` write mapping is not implemented in this
+release; its presence in the UI is control preflight evidence, not an active API.
 
 See [DOCS.md](DOCS.md) for the operating and safety contract.

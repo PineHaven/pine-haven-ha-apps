@@ -42,7 +42,7 @@ jobs:
       - name: Build App container
         run: >-
           docker build
-          --build-arg BUILD_VERSION=1.1.0
+          --build-arg BUILD_VERSION=1.2.0
           --build-arg BUILD_ARCH=amd64
           --tag deco-api-research:test
           deco-api-research

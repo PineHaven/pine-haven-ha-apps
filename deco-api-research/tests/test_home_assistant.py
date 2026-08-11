@@ -34,8 +34,8 @@ class _Session:
 
 def _status():
     return {
-        "schema_version": 3,
-        "app_version": "1.1.0",
+        "schema_version": 4,
+        "app_version": "1.2.0",
         "mode": "healthy",
         "last_success_at": "2026-08-10T12:00:00+00:00",
         "last_attempt_at": "2026-08-10T12:00:00+00:00",
@@ -85,6 +85,21 @@ def _status():
                 "interfaces": {"main": 9},
             },
             "wireless_radio": {"band2_4": {"channel": 4, "configured_width_mhz": 40}},
+            "coexistence": {
+                "model": "conservative_frequency_geometry_v1",
+                "current": {
+                    "risk": "high",
+                    "zigbee_networks": [
+                        {"id": "core", "channel": 15, "risk": "primary_overlap"}
+                    ],
+                },
+                "control_readiness": {
+                    "state": "disarmed",
+                    "writes_enabled": False,
+                    "live_validation": "not_tested",
+                    "required_next_step": "Validate in a controlled experiment.",
+                },
+            },
         },
     }
 
@@ -97,6 +112,14 @@ class HomeAssistantPublisherTests(unittest.IsolatedAsyncioTestCase):
             "on",
         )
         self.assertEqual(entities["sensor.free_the_deco_2_4_ghz_channel"]["state"], 4)
+        self.assertEqual(
+            entities["sensor.free_the_deco_zigbee_coexistence_risk"]["state"],
+            "high",
+        )
+        self.assertEqual(
+            entities["sensor.free_the_deco_radio_control_readiness"]["state"],
+            "disarmed",
+        )
         serialized = json.dumps(entities)
         self.assertNotIn("mac", serialized.lower())
         self.assertNotIn("password", serialized.lower())
