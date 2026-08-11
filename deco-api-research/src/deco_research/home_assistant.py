@@ -156,6 +156,16 @@ def build_device_discovery(
                     + state_expression
                     + " is number else 'None' }}"
                 )
+            elif component.get("device_class") == "timestamp":
+                value_template = (
+                    "{{ "
+                    + state_expression
+                    + " if "
+                    + state_expression
+                    + " is string and "
+                    + state_expression
+                    + " != 'unknown' else 'None' }}"
+                )
             else:
                 value_template = "{{ " + state_expression + " }}"
             component.update(

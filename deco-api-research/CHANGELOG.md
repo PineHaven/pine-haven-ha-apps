@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.2.2
+
+- Render missing timestamp diagnostics as Home Assistant's supported `None`
+  payload, completing the unavailable-state cleanup begun in 1.2.1.
+- Keep string health/control diagnostics unchanged and retain the fixed
+  read-only Deco wire boundary.
+
 ## 1.2.1
 
 - Render missing numeric MQTT measurements as Home Assistant's supported `None`

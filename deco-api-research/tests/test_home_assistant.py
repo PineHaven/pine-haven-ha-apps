@@ -186,6 +186,25 @@ class HomeAssistantPublisherTests(unittest.IsolatedAsyncioTestCase):
             "{{ value_json['free_the_deco_radio_control_readiness'][\"state\"] }}",
         )
 
+    def test_missing_timestamp_renders_home_assistant_none(self):
+        status = _status()
+        status["next_poll_at"] = None
+        entities = build_entity_states(status)
+        messages = build_device_discovery(status, entities)
+
+        self.assertEqual(entities["sensor.free_the_deco_next_poll"]["state"], "unknown")
+        monitor = json.loads(
+            messages["homeassistant/device/free_the_deco_monitor/config"]
+        )
+        component = monitor["components"]["free_the_deco_next_poll"]
+        self.assertEqual(
+            component["value_template"],
+            "{{ value_json['free_the_deco_next_poll'][\"state\"] if "
+            "value_json['free_the_deco_next_poll'][\"state\"] is string and "
+            "value_json['free_the_deco_next_poll'][\"state\"] != 'unknown' "
+            "else 'None' }}",
+        )
+
     async def test_discovery_is_deduplicated_but_state_refreshes_each_cycle(self):
         session = _Session()
         publisher = HomeAssistantPublisher(
