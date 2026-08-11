@@ -55,6 +55,11 @@ UI_HTML = r"""<!doctype html>
     th { color:var(--muted); font-size:11px; text-transform:uppercase; letter-spacing:.08em; }
     .diag { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px 18px; margin-top:12px; }
     .diag .row { padding:7px 0; border-bottom:1px solid var(--line); }
+    .labhead { display:flex; justify-content:space-between; align-items:flex-start; gap:14px; margin-bottom:12px; }
+    .labstate { padding:8px 11px; border:1px solid #6d5428; border-radius:10px; background:#392f1d; color:var(--amber); font-weight:750; white-space:nowrap; }
+    .risk-high,.risk-primary_overlap { color:var(--red); } .risk-elevated,.risk-possible_40mhz_extension,.risk-adjacent,.risk-guarded { color:var(--amber); } .risk-separated,.risk-lower { color:var(--green); }
+    .candidate-note { max-width:430px; color:var(--muted); }
+    .tablewrap { overflow-x:auto; }
     #error { display:none; color:var(--red); margin-top:8px; }
     @media (max-width:900px) { .card { grid-column:span 6; } .card.wide { grid-column:1/-1; } .healthgrid { grid-template-columns:repeat(2,minmax(0,1fr)); } .diag { grid-template-columns:repeat(2,minmax(0,1fr)); } }
     @media (max-width:560px) { main { padding:14px; } header { align-items:flex-start; } .card { grid-column:1/-1; } .healthgrid,.diag { grid-template-columns:1fr; } .hide-mobile { display:none; } button { min-width:112px; } }
@@ -90,6 +95,11 @@ UI_HTML = r"""<!doctype html>
     <div class="card wide"><div class="label">Client distribution</div><div id="client-bars" class="bars"></div></div>
     <div class="card wide"><div class="label">Radio status</div><table><thead><tr><th>Band</th><th>Channel</th><th>Width</th><th>Auto channel</th></tr></thead><tbody id="radio-table"></tbody></table></div>
   </section>
+  <section><div class="card full">
+    <div class="labhead"><div><div class="label">2.4 GHz coexistence laboratory</div><h2 style="margin-top:7px">Channel and width preflight</h2><div id="lab-summary" class="muted">Awaiting radio data</div></div><div id="lab-state" class="labstate">DISARMED</div></div>
+    <div class="tablewrap"><table><thead><tr><th>Plan</th><th>Wi-Fi</th><th>CORE 15</th><th>AMBIENCE 20</th><th>PERIMETER 11</th><th>Trade-off</th></tr></thead><tbody id="candidate-table"></tbody></table></div>
+    <div id="lab-contract" class="alert warn" style="margin-top:14px"></div>
+  </div></section>
   <section class="grid"><div class="card full">
     <div class="label">Monitor diagnostics</div><div id="diagnostics" class="diag"></div>
   </div></section>
@@ -104,6 +114,7 @@ UI_HTML = r"""<!doctype html>
 
   function alertBox(kind,title,detail) { const div=document.createElement('div'); div.className=`alert ${kind}`; div.innerHTML=`<strong>${esc(title)}</strong><div class="muted">${esc(detail)}</div>`; return div; }
   function badgeKind(value) { const text=String(value||'').toLowerCase(); if (['healthy','authenticated','recovered','not_needed','succeeded'].includes(text)) return 'good'; if (['error','authentication_failed','unavailable','failed','stale'].includes(text)) return 'bad'; return 'warn'; }
+  function riskLabel(value) { return String(value||'unknown').replace('primary_overlap','DIRECT').replace('possible_40mhz_extension','40 MHz POSSIBLE').replace('adjacent','ADJACENT').replace('separated','SEPARATED').replaceAll('_',' ').toUpperCase(); }
   function setHealth(prefix,value,detail) { const badge=$(`${prefix}-badge`); badge.textContent=String(value||'unknown').replaceAll('_',' '); badge.className=`badge ${badgeKind(value)}`; $(`${prefix}-detail`).textContent=detail; }
   function age(seconds) { if (seconds === null || seconds === undefined) return 'never'; if (seconds < 60) return `${Math.round(seconds)}s`; if (seconds < 3600) return `${Math.round(seconds/60)}m`; return `${Math.round(seconds/3600)}h`; }
 
@@ -124,7 +135,8 @@ UI_HTML = r"""<!doctype html>
     else if (mode==='error') alerts.append(alertBox('bad','Monitor read failed',`Safe error category: ${data.error_code||'unknown'}`));
     if (mesh.offline_count>0) alerts.append(alertBox('warn',`${mesh.offline_count} Deco offline`,'Use the mesh cards below to identify the affected location.'));
     const band2=mesh.wireless_radio?.band2_4||{};
-    if (band2.channel===4&&band2.configured_width_mhz===40) alerts.append(alertBox('warn','Known Zigbee overlap remains','2.4 GHz Wi-Fi channel 4 at 40 MHz overlaps Pine Haven Zigbee channels 15 and 20.'));
+    const coexistence=mesh.coexistence||{}, current=coexistence.current||{}, control=coexistence.control_readiness||{};
+    if (current.risk==='high'||current.risk==='elevated') alerts.append(alertBox('warn','Elevated 2.4 GHz coexistence risk',`Channel ${fmt(current.channel)} at ${fmt(current.width_mhz)} MHz has ${current.risk} modeled contention with Pine Haven Zigbee.`));
     if (!alerts.children.length&&mode==='healthy') alerts.append(alertBox('good','Mesh monitor healthy','Deco reads, session health and Home Assistant publishing are within the freshness window.'));
 
     $('nodes-total').textContent=fmt(mesh.node_count); $('nodes-detail').textContent=mesh.node_count===undefined?'Awaiting data':`${mesh.online_count} online · ${mesh.offline_count} offline`;
@@ -140,6 +152,14 @@ UI_HTML = r"""<!doctype html>
     for (const [label,count] of entries) { const row=document.createElement('div'); row.className='barrow'; row.innerHTML=`<span>${esc(label)}</span><div class="bar"><span style="width:${Math.max(1,count/total*100)}%"></span></div><strong>${count}</strong>`; bars.append(row); }
     const tbody=$('radio-table'); tbody.replaceChildren();
     for (const [key,label] of [['band2_4','2.4 GHz'],['band5_1','5 GHz primary'],['band5_2','5 GHz secondary']]) { const band=mesh.wireless_radio?.[key]||{}, tr=document.createElement('tr'); tr.innerHTML=`<td>${label}</td><td>${fmt(band.channel)}</td><td>${band.configured_width_mhz?band.configured_width_mhz+' MHz':'—'}</td><td>${band.automatic_channel===null||band.automatic_channel===undefined?'—':band.automatic_channel?'Yes':'No'}</td>`; tbody.append(tr); }
+
+    $('lab-state').textContent=String(control.state||'disarmed').toUpperCase();
+    const widthOnly=coexistence.width_only_20mhz||{};
+    $('lab-summary').textContent=current.channel?`Current channel ${current.channel} / ${current.width_mhz} MHz${current.firmware_width_token?' ('+current.firmware_width_token+')':''} is ${current.risk||'unknown'} risk. A width-only move to 20 MHz removes ${widthOnly.possible_extension_exposures_removed||0} modeled extension exposure(s)${widthOnly.core_direct_overlap_remains?' but leaves direct CORE overlap.':'.'} Rankings are geometry only, not spectrum measurements.`:'No current 2.4 GHz channel available.';
+    const candidateBody=$('candidate-table'); candidateBody.replaceChildren();
+    for (const candidate of coexistence.candidate_plans||[]) { const byId=Object.fromEntries((candidate.zigbee_networks||[]).map(row=>[row.id,row])); const tr=document.createElement('tr'); const cell=id=>`<strong class="risk-${esc(byId[id]?.risk)}">${esc(riskLabel(byId[id]?.risk))}</strong>`; tr.innerHTML=`<td><strong>#${fmt(candidate.geometry_rank)} ${esc(candidate.name)}</strong></td><td>Ch ${fmt(candidate.channel)} / ${fmt(candidate.width_mhz)} MHz</td><td>${cell('core')}</td><td>${cell('ambience')}</td><td>${cell('perimeter')}</td><td class="candidate-note">${esc(candidate.tradeoff)}</td>`; candidateBody.append(tr); }
+    if (!candidateBody.children.length) { const tr=document.createElement('tr'); tr.innerHTML='<td colspan="6" class="muted">Candidate geometry is unavailable.</td>'; candidateBody.append(tr); }
+    const contract=control.firmware_contract||{}; $('lab-contract').innerHTML=`<strong>No radio write can run from this release.</strong><div class="muted">Firmware mapping: ${esc(contract.endpoint||'—')} / ${esc(contract.form||'—')} with ${esc((contract.known_bandwidth_tokens||[]).join(' and ')||'unconfirmed')} bandwidth tokens. Live behaviour is ${esc(control.live_validation||'unknown')}; a commit may restart the mesh. Next gate: ${esc(control.required_next_step||'not defined')}</div>`;
 
     const diag=$('diagnostics'); diag.replaceChildren();
     for (const [label,value] of [['App uptime',age(data.app_uptime_seconds)],['Poll interval',`${data.poll_interval_seconds}s`],['Freshness window',`${data.stale_after_seconds}s`],['Last trigger',data.last_poll_trigger||'—'],['Last cycle',data.last_cycle_duration_ms===null?'—':`${data.last_cycle_duration_ms} ms`],['Manual refresh',refresh.status||'idle'],['Successful cycles',data.successful_cycles||0],['Failed cycles',data.failed_cycles||0],['Consecutive failures',data.consecutive_failures||0]]) { const row=document.createElement('div'); row.className='row'; row.innerHTML=`<span>${esc(label)}</span><strong>${esc(value)}</strong>`; diag.append(row); }

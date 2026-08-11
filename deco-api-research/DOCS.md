@@ -1,6 +1,6 @@
 # FREE THE DECO operating contract
 
-## Version 1.1
+## Version 1.2
 
 FREE THE DECO is a continuously running Home Assistant App. When monitoring is
 enabled, it performs four fixed authenticated `read` operations at a configurable
@@ -13,6 +13,37 @@ enabled, it performs four fixed authenticated `read` operations at a configurabl
 
 There is no generic endpoint runner or user-selectable Deco payload. Reboot,
 optimisation and every configuration write remain absent.
+
+## Coexistence laboratory
+
+Version 1.2 compares the sanitized 2.4 GHz channel and width with Pine Haven's
+three fixed Zigbee networks: PERIMETER channel 11, CORE channel 15 and AMBIENCE
+channel 20. The model uses frequency separation only. It does not measure
+neighbouring access points, airtime, received signal strength or interference at
+individual Zigbee devices, so its candidate ranking is not a production channel
+recommendation.
+
+The UI compares three standard 20 MHz plans:
+
+- channel 1 maximizes modeled separation from CORE and AMBIENCE but directly
+  overlaps PERIMETER;
+- channel 6 has no direct modeled overlap but remains adjacent to CORE and
+  AMBIENCE;
+- channel 11 maximizes modeled separation from CORE and PERIMETER but leaves
+  edge/adjacent pressure near AMBIENCE.
+
+The passive Deco reply reports an HT mode such as `HT40` without enough evidence
+to determine the extension direction. The model therefore labels Zigbee networks
+within either possible secondary-channel footprint as possible 40 MHz-extension
+exposure.
+
+Firmware analysis maps `admin/wireless`, form `wlan`, operation `write` to
+`band2_4.host.channel` and `band2_4.host.bandwidth`, followed by a commit; the
+radio scripts recognize `HT20` and `HT40`. This is evidence for a controlled lab,
+not proof of production behaviour. Version 1.2 contains no write implementation.
+An isolated-unit validation or an explicitly approved maintenance-window trial
+must prove interruption, readback, persistence and rollback before a production
+control can be considered.
 
 ## Home Assistant ownership and output
 
@@ -34,6 +65,7 @@ counts, connected-client totals, 2.4/5 GHz/wired client counts, controller load,
 2.4 GHz channel/width and per-node online/backhaul state. Version 1.1 adds App
 uptime, poll age, next poll, success/failure counters, consecutive failures,
 read/session/publisher health, recovery, staleness and manual-refresh status.
+Version 1.2 adds coexistence-risk and radio-control-readiness entities.
 
 The established `free_the_deco_*` entity IDs remain the defaults. A display alias
 changes a node's visible name but preserves the stable ID derived from its existing

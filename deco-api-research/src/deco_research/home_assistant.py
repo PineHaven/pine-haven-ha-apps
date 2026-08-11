@@ -449,6 +449,46 @@ def build_entity_states(status: dict[str, Any]) -> dict[str, dict[str, Any]]:
         unit_of_measurement="MHz",
     )
 
+    coexistence = mesh.get("coexistence", {})
+    current = (
+        coexistence.get("current", {}) if isinstance(coexistence, dict) else {}
+    )
+    networks = (
+        current.get("zigbee_networks", []) if isinstance(current, dict) else []
+    )
+    control = (
+        coexistence.get("control_readiness", {})
+        if isinstance(coexistence, dict)
+        else {}
+    )
+    _add(
+        entities,
+        "sensor.free_the_deco_zigbee_coexistence_risk",
+        current.get("risk", "unknown") if isinstance(current, dict) else "unknown",
+        "FREE THE DECO Zigbee Coexistence Risk",
+        "mdi:access-point-network-off",
+        component_name="Zigbee Coexistence Risk",
+        model=coexistence.get("model") if isinstance(coexistence, dict) else None,
+        zigbee_networks=networks,
+    )
+    _add(
+        entities,
+        "sensor.free_the_deco_radio_control_readiness",
+        control.get("state", "unknown") if isinstance(control, dict) else "unknown",
+        "FREE THE DECO Radio Control Readiness",
+        "mdi:lock-outline",
+        component_name="Radio Control Readiness",
+        writes_enabled=(
+            control.get("writes_enabled") if isinstance(control, dict) else None
+        ),
+        live_validation=(
+            control.get("live_validation") if isinstance(control, dict) else None
+        ),
+        required_next_step=(
+            control.get("required_next_step") if isinstance(control, dict) else None
+        ),
+    )
+
     nodes = mesh.get("nodes", [])
     if isinstance(nodes, list):
         for node in nodes:

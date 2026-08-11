@@ -189,6 +189,7 @@ class SanitizerTests(unittest.TestCase):
             {
                 "channel": 6,
                 "configured_width_mhz": 40,
+                "firmware_width_token": "HT40",
                 "automatic_channel": False,
                 "automatic_width": True,
             },
@@ -279,6 +280,7 @@ class SanitizerTests(unittest.TestCase):
             {
                 "channel": None,
                 "configured_width_mhz": None,
+                "firmware_width_token": None,
                 "automatic_channel": None,
                 "automatic_width": None,
             },

@@ -1,5 +1,23 @@
 # Changelog
 
+## 1.2.0
+
+- Add a Pine Haven-specific coexistence model for the observed Deco 2.4 GHz
+  channel/width and Zigbee CORE 15, AMBIENCE 20 and PERIMETER 11.
+- Show conservative direct, possible 40 MHz-extension, adjacent and separated
+  assessments without claiming passive spectrum-occupancy evidence.
+- Compare channel 1, 6 and 11 at 20 MHz as explicit trade-off plans and label the
+  ranking as frequency geometry rather than a production recommendation.
+- Preserve a recognized firmware HT-mode token such as `HT40` while continuing
+  to discard all unexpected strings and every wireless secret.
+- Add durable Home Assistant entities for coexistence risk and radio-control
+  readiness.
+- Document the firmware-derived `admin/wireless` / `wlan` write contract, known
+  `HT20`/`HT40` tokens, possible mesh restart, and the remaining live-validation
+  and rollback gates.
+- Keep the control laboratory disarmed: the wire allowlist remains the same four
+  reads, with no write, optimiser, reboot or generic operation.
+
 ## 1.1.0
 
 - Replace transient Home Assistant state objects with retained MQTT Device
