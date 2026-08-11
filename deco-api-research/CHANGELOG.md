@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.2.1
+
+- Render missing numeric MQTT measurements as Home Assistant's supported `None`
+  payload rather than the non-numeric string `unknown`.
+- Preserve unavailable controller/offline-node backhaul states without inventing
+  a zero-speed measurement or changing any entity ID, unit or state class.
+- Keep the fixed read-only Deco wire boundary unchanged.
+
 ## 1.2.0
 
 - Add a Pine Haven-specific coexistence model for the observed Deco 2.4 GHz
