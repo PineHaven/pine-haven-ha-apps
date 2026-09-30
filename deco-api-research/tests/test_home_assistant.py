@@ -34,8 +34,8 @@ class _Session:
 
 def _status():
     return {
-        "schema_version": 4,
-        "app_version": "1.2.0",
+        "schema_version": 5,
+        "app_version": "1.3.0",
         "mode": "healthy",
         "last_success_at": "2026-08-10T12:00:00+00:00",
         "last_attempt_at": "2026-08-10T12:00:00+00:00",
@@ -66,6 +66,7 @@ def _status():
                     "model": "Deco M9 Plus",
                     "hardware_version": "2.0",
                     "firmware_version": "1.9.1",
+                    "ip_address": "192.168.1.237",
                     "online": True,
                     "internet": "online",
                     "role": "controller",
@@ -110,6 +111,10 @@ class HomeAssistantPublisherTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(
             entities["binary_sensor.free_the_deco_m9plus_online"]["state"],
             "on",
+        )
+        self.assertEqual(
+            entities["binary_sensor.free_the_deco_m9plus_online"]["attributes"]["ip_address"],
+            "192.168.1.237",
         )
         self.assertEqual(entities["sensor.free_the_deco_2_4_ghz_channel"]["state"], 4)
         self.assertEqual(
