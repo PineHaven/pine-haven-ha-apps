@@ -525,6 +525,7 @@ def build_entity_states(status: dict[str, Any]) -> dict[str, dict[str, Any]]:
                 component_name="Online",
                 device_key=device_key,
                 device_class="connectivity",
+                ip_address=node.get("ip_address"),
                 internet=node.get("internet"),
                 role=node.get("role"),
                 connection_types=node.get("connection_types"),
