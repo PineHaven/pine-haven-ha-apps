@@ -198,6 +198,38 @@ class SanitizerTests(unittest.TestCase):
             result["wireless_radio"]["band5_1"]["configured_width_mhz"], 80
         )
 
+    def test_private_node_ip_is_exposed_but_public_and_client_ips_stay_redacted(self):
+        result = build_snapshot(
+            [
+                {
+                    "custom_nickname": "living_room",
+                    "device_ip": "192.168.1.237",
+                    "group_status": "connected",
+                },
+                {
+                    "custom_nickname": "workshop",
+                    "device_ip": "8.8.8.8",
+                    "group_status": "connected",
+                },
+            ],
+            {},
+            [
+                {
+                    "ip": "192.168.1.99",
+                    "online": True,
+                    "connection_type": "band2_4",
+                    "interface": "main",
+                }
+            ],
+        )
+
+        by_id = {node["id"]: node for node in result["nodes"]}
+        self.assertEqual(by_id["living_room"]["ip_address"], "192.168.1.237")
+        self.assertIsNone(by_id["workshop"]["ip_address"])
+        serialized = json.dumps(result)
+        self.assertNotIn("8.8.8.8", serialized)
+        self.assertNotIn("192.168.1.99", serialized)
+
     def test_alias_changes_display_name_without_renaming_stable_node_id(self):
         result = build_snapshot(
             [
