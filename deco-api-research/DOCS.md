@@ -1,6 +1,6 @@
 # FREE THE DECO operating contract
 
-## Version 1.2
+## Version 1.3
 
 FREE THE DECO is a continuously running Home Assistant App. When monitoring is
 enabled, it performs four fixed authenticated `read` operations at a configurable
@@ -66,6 +66,9 @@ counts, connected-client totals, 2.4/5 GHz/wired client counts, controller load,
 uptime, poll age, next poll, success/failure counters, consecutive failures,
 read/session/publisher health, recovery, staleness and manual-refresh status.
 Version 1.2 adds coexistence-risk and radio-control-readiness entities.
+Version 1.3 adds each Deco node's validated private/local IP address as a
+diagnostic attribute on its existing online entity; it does not create a new
+entity or add a new Deco wire operation.
 
 The established `free_the_deco_*` entity IDs remain the defaults. A display alias
 changes a node's visible name but preserves the stable ID derived from its existing
@@ -90,10 +93,13 @@ rejected while one is queued or running.
 
 ## Data boundary
 
-The local authenticated UI may show configured Deco display names so an operator
-can identify a failed room. It never exposes node MAC/IP/BSSID values. Client
-names, MAC/IP addresses, SSIDs, wireless credentials and raw replies are discarded
-before the snapshot is stored, rendered or published.
+The local authenticated UI may show configured Deco display names and each
+node's validated private/local IP address so an operator can identify a failed
+room and maintain DHCP reservations. Only RFC1918 IPv4 or ULA IPv6 node
+addresses are retained; public or malformed node addresses are discarded. Node
+MAC/BSSID values remain suppressed. Client names, client MAC/IP addresses,
+SSIDs, wireless credentials and raw replies are discarded before the snapshot
+is stored, rendered or published.
 
 Unexpected telemetry strings are counted as unparsed and are never returned.
 Backhaul speeds use megabits per second, matching the upstream integration's

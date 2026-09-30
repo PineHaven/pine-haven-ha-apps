@@ -5,6 +5,7 @@ import math
 import re
 import unicodedata
 from collections import Counter
+from ipaddress import ip_address, ip_network
 from typing import Any
 
 from .coexistence import build_coexistence_diagnostics
@@ -12,6 +13,10 @@ from .options import normalize_mac
 
 MAX_REPORTED_NUMBER = 10**15
 NUMERIC_TEXT = re.compile(r"^[0-9]+(?:\.[0-9]+)?$")
+LOCAL_NODE_NETWORKS = tuple(
+    ip_network(network)
+    for network in ("10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16", "fc00::/7")
+)
 
 
 def build_snapshot(
@@ -21,7 +26,7 @@ def build_snapshot(
     wireless: object | None = None,
     node_aliases: dict[str, str] | None = None,
 ) -> dict[str, Any]:
-    """Return monitoring data without client or network identifiers."""
+    """Return monitoring data with validated local node IPs but no client identifiers."""
 
     safe_devices = devices if isinstance(devices, list) else []
     online_count = 0
@@ -199,7 +204,7 @@ def build_snapshot(
 def _node_summaries(
     devices: list[object], aliases: dict[str, str]
 ) -> list[dict[str, Any]]:
-    """Build per-node health rows while discarding MAC, IP and BSSID values."""
+    """Build per-node health rows while discarding MAC/BSSID and public IP values."""
 
     normalized_aliases = {
         mac: name
@@ -247,6 +252,7 @@ def _node_summaries(
                 "model": _safe_label(record.get("device_model")),
                 "hardware_version": _safe_label(record.get("hardware_ver")),
                 "firmware_version": _safe_label(record.get("software_ver")),
+                "ip_address": _local_node_ip(record.get("device_ip")),
                 "connection_types": connection_types,
                 "ethernet_backhaul_ports_reported": _safe_list_length(
                     record.get("eth_bkhl_ports")
@@ -261,6 +267,20 @@ def _node_summaries(
     return sorted(
         summaries, key=lambda item: (item["role"] != "controller", item["name"])
     )
+
+
+def _local_node_ip(value: object) -> str | None:
+    """Return a normalized RFC1918/ULA node address and reject all other values."""
+
+    if not isinstance(value, str):
+        return None
+    try:
+        address = ip_address(value.strip())
+    except ValueError:
+        return None
+    if any(address in network for network in LOCAL_NODE_NETWORKS):
+        return str(address)
+    return None
 
 
 def _decoded_node_name(record: dict[str, Any]) -> str | None:

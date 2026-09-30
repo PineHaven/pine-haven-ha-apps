@@ -52,7 +52,7 @@ class ProbeRuntime:
             options.poll_interval_seconds * options.stale_after_intervals
         )
         self._state: dict[str, Any] = {
-            "schema_version": 4,
+            "schema_version": 5,
             "app_version": APP_VERSION,
             "mode": "starting" if options.monitoring_enabled else "disabled",
             "monitoring_enabled": options.monitoring_enabled,

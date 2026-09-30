@@ -7,6 +7,8 @@ class UiTests(unittest.TestCase):
     def test_ingress_ui_is_self_contained_and_has_live_sections(self):
         self.assertIn("FREE THE DECO", UI_HTML)
         self.assertIn("Deco mesh", UI_HTML)
+        self.assertIn("IP address", UI_HTML)
+        self.assertIn("node.ip_address", UI_HTML)
         self.assertIn("Client distribution", UI_HTML)
         self.assertIn("Radio status", UI_HTML)
         self.assertIn("Operational health", UI_HTML)

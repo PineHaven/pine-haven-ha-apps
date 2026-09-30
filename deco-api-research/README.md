@@ -2,19 +2,18 @@
 
 Pine Haven's local-first TP-Link Deco mesh monitor and Stage 2 research platform.
 
-Version 1.2 adds a Pine Haven-specific 2.4 GHz coexistence laboratory to the
-primary Home Assistant App. It compares the observed Deco channel and width with
-the CORE, AMBIENCE and PERIMETER Zigbee channels, models three 20 MHz candidate
-plans, and exposes the firmware-derived radio-control contract and remaining live
-validation gates. It keeps the version 1.1 operational hardening, fixed four-read
-allowlist and MQTT Device Discovery output.
+Version 1.3 adds validated private/local IP visibility for each Deco node to the
+authenticated Ingress UI and the existing per-node Home Assistant diagnostic
+attributes. It keeps the Pine Haven-specific 2.4 GHz coexistence laboratory from
+version 1.2, the version 1.1 operational hardening, the fixed four-read allowlist
+and MQTT Device Discovery output.
 
 It is still read-only: the control laboratory is explicitly disarmed and no Deco
 setting, optimiser scan, or generic API operation is available.
 
 The live monitor reports:
 
-- each named Deco's online, internet, backhaul and signal state;
+- each named Deco's local IP, online, internet, backhaul and signal state;
 - mesh totals and controller CPU/memory load;
 - anonymous connected-client totals by band and network interface;
 - current Wi-Fi channels and configured widths;
@@ -29,9 +28,11 @@ Discovery preserves the established `free_the_deco_*` entity IDs. Display aliase
 such as Workshop and Gym change presentation only; they do not rename entities.
 Discovery identifiers are logical App identifiers and never hardware identifiers.
 
-Client names, client addresses, SSIDs, Wi-Fi passwords, BSSIDs, node MACs and raw
-API replies are never exposed or published. Node display names are permitted only
-inside the authenticated local Ingress UI and Home Assistant telemetry.
+Validated private/local Deco node IP addresses are exposed for operations and
+DHCP reservation work. Client names and client addresses, SSIDs, Wi-Fi passwords,
+BSSIDs, node MACs and raw API replies are never exposed or published. Node display
+names and local node IPs are permitted only inside the authenticated local Ingress
+UI and Home Assistant telemetry.
 
 Because the Deco owner login is exclusive, continuous monitoring must not run at
 the same time as another Deco integration using that login. Enabling the monitor
