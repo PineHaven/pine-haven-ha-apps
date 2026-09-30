@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.3.0
+
+- Expose each Deco node's validated private/local IP address from the existing
+  device-inventory read for local operations and DHCP reservation work.
+- Show the node IP on each Deco card in the authenticated Ingress UI and attach
+  it as a diagnostic attribute to the existing per-node online entity.
+- Accept only RFC1918 IPv4 or ULA IPv6 node addresses; public/invalid node IPs
+  remain suppressed.
+- Continue discarding all client IPs/names, node and client MACs, BSSIDs, SSIDs,
+  wireless credentials and raw API replies.
+- Keep the same fixed four-read wire allowlist; no Deco writes, optimiser scans,
+  reboot operations or generic endpoints were added.
+- Bump the sanitized snapshot contract to schema version 5.
+
 ## 1.2.2
 
 - Render missing timestamp diagnostics as Home Assistant's supported `None`
