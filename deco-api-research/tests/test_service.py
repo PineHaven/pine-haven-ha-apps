@@ -54,7 +54,7 @@ class ProbeRuntimeTests(unittest.IsolatedAsyncioTestCase):
         await asyncio.sleep(0)
 
         status = runtime.status()
-        self.assertEqual(status["schema_version"], 4)
+        self.assertEqual(status["schema_version"], 5)
         self.assertEqual(status["mode"], "disabled")
         self.assertFalse(status["data_stale"])
         self.assertIsNone(status["last_attempt_at"])
