@@ -14,7 +14,7 @@
     "aarch64",
     "amd64"
   ],
-  "boot": "manual",
+  "boot": "auto",
   "init": false,
   "ingress": true,
   "timeout": 30,
