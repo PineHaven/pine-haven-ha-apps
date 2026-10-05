@@ -16,24 +16,29 @@ It deliberately uses the official stable Zigbee2MQTT pre-built image:
 
 Main-house CORE or AMBIENCE devices do **not** belong on this network.
 
-## Safety design
+## Operational ownership
 
-This App is deliberately shipped with:
+PERIMETER has completed its controlled cutover and is now an operational
+Zigbee2MQTT-owned network.
 
-- `boot: manual`
-- no MQTT username or password
-- no coordinator address
-- no Zigbee network key, PAN ID or extended PAN ID
-- no pre-seeded Zigbee database
+This App is therefore shipped with:
 
-This means committing/installing the App does **not** by itself take control of a Zigbee radio.
+- `boot: auto`
+- no MQTT username or password in Git
+- no coordinator address in Git
+- no Zigbee network key, PAN ID or extended PAN ID in Git
+- no pre-seeded Zigbee database in Git
 
-### Critical rule
+Runtime credentials, coordinator endpoint and preserved Zigbee-network identity
+remain deployment/runtime configuration and are not stored in this repository.
 
-**Never start this App while ZHA is still using the PERIMETER coordinator.**
+### Critical single-owner rule
 
-The live PERIMETER coordinator is currently owned by ZHA. The actual coordinator and
-preserved Zigbee-network identity are configured only during the controlled cutover.
+**Never run another Zigbee stack against the PERIMETER coordinator while this
+Zigbee2MQTT instance owns it.**
+
+In particular, do not re-enable or commission ZHA against the live PERIMETER
+coordinator without a separately controlled ownership cutover.
 
 ## Runtime plan
 
@@ -48,9 +53,6 @@ Expected MQTT base topic:
 Expected adapter family:
 
 `zstack`
-
-The coordinator endpoint, MQTT credentials, and preserved Zigbee network identity are
-intentionally configured at deployment/cutover time rather than stored in this repository.
 
 ## Repository placement
 
