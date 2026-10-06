@@ -1,6 +1,6 @@
 {
   "name": "Pine Haven Zigbee2MQTT - PERIMETER",
-  "version": "2.13.0-2",
+  "version": "2.13.0-1",
   "slug": "zigbee2mqtt_perimeter",
   "description": "Pine Haven PERIMETER Zigbee2MQTT instance using the official stable Zigbee2MQTT image",
   "uart": true,
